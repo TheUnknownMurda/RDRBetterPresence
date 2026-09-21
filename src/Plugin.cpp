@@ -147,7 +147,9 @@ namespace
 			GameSnapshot current = GameState::Sample(previous, refreshScripts);
 			LogInterestingChanges(previous, current);
 
-			if (current.playerValid && REDHOOK::IS_KEY_PRESSED(KEY_F9))
+			// Bit 0 of GetAsyncKeyState = "pressed since the last call", so a short tap is not
+			// lost between two 500 ms polls (RedHook's IS_KEY_PRESSED is per-frame).
+			if (current.playerValid && (GetAsyncKeyState(VK_F9) & 1))
 			{
 				GameState::DumpStats(g_directory + kStatsDumpName);
 			}
