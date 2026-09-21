@@ -27,9 +27,6 @@ namespace
 		int gameState;
 		char playerName[64];
 		int bounty;
-		int journalTarget, lastObjective, testMission, validScripts;
-		char validScriptIds[128];
-		char journal[4096];
 	};
 
 	// "Active bounty total" stat id (Foxxyyy, RDR_Stats.c); verified in-game.
@@ -149,43 +146,6 @@ namespace
 		// Stats are stored as floats (observed in-game: the int native returned 0x42960000 = 75.0 for a $75 bounty).
 		r.bounty = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatBounty) + 0.5f);
 
-		// Mission research
-		r.journalTarget = JOURNAL::GET_TARGETED_JOURNAL_ENTRY();
-		r.lastObjective = JOURNAL::GET_LAST_NOTE_OBJECTIVE();
-		r.testMission = CORE::SCRIPT_GETTESTMISSION();
-		r.validScripts = 0;
-		r.validScriptIds[0] = 0;
-		for (int id = 0; id < 128; ++id)
-		{
-			if (CORE::IS_SCRIPT_VALID(id))
-			{
-				++r.validScripts;
-				size_t len = strlen(r.validScriptIds);
-				snprintf(r.validScriptIds + len, sizeof(r.validScriptIds) - len, "%s%d", len ? "," : "", id);
-			}
-		}
-
-		// Journal lists: dump what the game holds so mission entries can be recognised.
-		r.journal[0] = 0;
-		for (int list = 0; list < 6; ++list)
-		{
-			int count = JOURNAL::GET_NUM_JOURNAL_ENTRIES_IN_LIST(list);
-			if (count <= 0 || count > 64) continue;
-			size_t len = strlen(r.journal);
-			snprintf(r.journal + len, sizeof(r.journal) - len, " L%d:%d[", list, count);
-			for (int i = 0; i < count && i < 48; ++i)
-			{
-				int entry = JOURNAL::GET_JOURNAL_ENTRY_IN_LIST(list, i);
-				int type = JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry);
-				int targeted = JOURNAL::IS_JOURNAL_ENTRY_TARGETED(entry);
-				int details = JOURNAL::GET_JOURNAL_ENTRY_NUM_DETAILS(entry);
-				int firstDetail = details > 0 ? JOURNAL::GET_JOURNAL_ENTRY_DETAIL_HASH_BY_INDEX(entry, 0) : 0;
-				len = strlen(r.journal);
-				snprintf(r.journal + len, sizeof(r.journal) - len, "%s0x%X t%d%s d%d/0x%X", i ? " " : "", (unsigned)entry, type, targeted ? "*" : "", details, (unsigned)firstDetail);
-			}
-			len = strlen(r.journal);
-			snprintf(r.journal + len, sizeof(r.journal) - len, "]");
-		}
 	}
 
 	// Returns false if a native blew up (access violation etc.) - the game keeps running
@@ -202,21 +162,9 @@ namespace
 			return false;
 		}
 	}
-
-	int DetectScriptGuarded()
-	{
-		__try
-		{
-			return Scripts::DetectIndex();
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
-			return -2;
-		}
-	}
 }
 
-GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts)
+GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshMission)
 {
 	RawSnapshot r{};
 	static int s_failures = 0;
@@ -272,59 +220,10 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 	s.outfit = r.outfit;
 	s.playerName = r.playerName;
 	s.bounty = r.bounty;
-	s.journalTarget = r.journalTarget;
-	s.lastObjective = r.lastObjective;
-	s.testMission = r.testMission;
-	s.validScripts = r.validScripts;
-	s.validScriptIds = r.validScriptIds;
-	s.journal = r.journal;
 
-	// Script detection is ~200 native calls, so it is refreshed every few samples only.
-	static bool s_scriptsDisabled = false;
-	s.script = previous.script;
-	if (refreshScripts && !s_scriptsDisabled)
-	{
-		int index = DetectScriptGuarded();
-		if (index == -2)
-		{
-			Log::Error("Exception during script detection - mission names disabled for this session");
-			s_scriptsDisabled = true;
-			s.script = ActiveScript{};
-		}
-		else
-		{
-			s.script = Scripts::Describe(index);
-		}
-	}
+	// The journal scan is a few dozen native calls, so it is refreshed every few samples only.
+	s.mission = refreshMission ? Journal::Detect() : previous.mission;
 	return s;
 }
 
 
-namespace
-{
-	void LogMissionLabelHashesRaw()
-	{
-		char line[512];
-		for (int n = 0; n <= 57; ++n)
-		{
-			char label[16], shortLabel[24];
-			snprintf(label, sizeof(label), "miss%d", n);
-			snprintf(shortLabel, sizeof(shortLabel), "miss%d_short", n);
-			snprintf(line, sizeof(line), "hash(%s)=0x%08X hash(%s)=0x%08X", label, STRING::STRING_TO_HASH(label), shortLabel, STRING::STRING_TO_HASH(shortLabel));
-			Log::FileOnly("%s", line);
-		}
-	}
-}
-
-void GameState::LogMissionLabelHashes()
-{
-	__try
-	{
-		LogMissionLabelHashesRaw();
-		Scripts::LogNameHashes();
-	}
-	__except (EXCEPTION_EXECUTE_HANDLER)
-	{
-		Log::Error("Exception while hashing mission labels");
-	}
-}

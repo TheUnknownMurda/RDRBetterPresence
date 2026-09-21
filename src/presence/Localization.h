@@ -288,21 +288,10 @@ namespace Localization
 		return language == "fr" ? kFrench : kEnglish;
 	}
 
-	// Minigame / job titles are stored in English in the script table; translate on display.
+	// Mission titles stay in English (they are the game's own); only generic activities translate.
 	inline std::string TranslateActivity(const std::string& language, const std::string& title)
 	{
-		if (language != "fr") return title;
-		static const std::pair<const char*, const char*> kMap[] =
-		{
-			{ "Poker", "poker" }, { "Blackjack", "blackjack" }, { "Liar's Dice", "dés menteurs" },
-			{ "Horseshoes", "fers à cheval" }, { "Five Finger Fillet", "jeu du couteau" }, { "Arm Wrestling", "bras de fer" },
-			{ "Night Watch", "Veilleur de nuit" }, { "Horsebreaking", "Dressage de chevaux" },
-			{ "Bounty hunting", "Chasse à la prime" }, { "Duel", "Duel" },
-		};
-		for (const auto& [en, fr] : kMap)
-		{
-			if (title == en) return fr;
-		}
+		if (language == "fr" && title == "Duel") return "Duel";
 		return title;
 	}
 }

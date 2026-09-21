@@ -125,45 +125,27 @@ namespace
 		const char* icon;   // small image asset key, "" = use the weapon icon instead
 	};
 
-	// What the scripts say the player is doing: a mission, a stranger, a minigame, a job.
-	// Empty text = nothing scripted is running.
-	ActivityChoice ChooseScriptedActivity(const GameSnapshot& s, const Config& cfg, const Strings& t)
+	// What the journal says the player is doing (mission, stranger, duel) or a running
+	// minigame. Empty text = nothing of the sort.
+	ActivityChoice ChooseScriptedActivity(const GameSnapshot& s, const Config& cfg, const Strings& t, const std::optional<RegionInfo>& region)
 	{
-		if (!cfg.showMissions)
+		if (cfg.showMissions)
 		{
-			return { s.minigame ? t.minigame : "", s.minigame ? "minigame" : "" };
-		}
-
-		const ActiveScript& sc = s.script;
-		std::string title = Localization::TranslateActivity(cfg.language, sc.title);
-		switch (sc.kind)
-		{
-			case ScriptKind::StoryMission:
-				return { t.missionPrefix + title, "mission" };
-			case ScriptKind::StrangerMission:
-				return { t.strangerPrefix + title, "stranger" };
-			case ScriptKind::Bounty:
-				return { title, "bounty" };
-			case ScriptKind::Job:
-			case ScriptKind::GangHideout:
-				return { title, "job" };
-			case ScriptKind::Duel:
-				return { title, "duel" };
-			case ScriptKind::Minigame:
-				// The table scripts may also run while merely sitting nearby: trust the engine flag.
-				if (s.minigame)
-				{
-					std::string text = t.playingPrefix + title;
-					if (!sc.place.empty()) text += kSeparator + sc.place;
-					return { text, "minigame" };
-				}
-				break;
-			default:
-				break;
+			std::string title = Localization::TranslateActivity(cfg.language, s.mission.title);
+			switch (s.mission.kind)
+			{
+				case MissionKind::Story:    return { t.missionPrefix + title, "mission" };
+				case MissionKind::Stranger: return { t.strangerPrefix + title, "stranger" };
+				case MissionKind::Duel:     return { title, "duel" };
+				default: break;
+			}
 		}
 		if (s.minigame)
 		{
-			return { t.minigame, "minigame" };
+			// The engine does not say which game; the nearest landmark says where.
+			std::string text = t.minigame;
+			if (region && !region->place.empty()) text += kSeparator + region->place;
+			return { text, "minigame" };
 		}
 		return { "", "" };
 	}
@@ -235,8 +217,9 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	// A scripted activity (mission, minigame...) owns the line; the moment-to-moment state
 	// (on horseback, in a gunfight...) then moves to the small image. Pause / cutscene / death
 	// always win.
+	std::optional<RegionInfo> region = Regions::Resolve(s);
 	ActivityChoice moment = ChooseActivity(s, t);
-	ActivityChoice scripted = ChooseScriptedActivity(s, cfg, t);
+	ActivityChoice scripted = ChooseScriptedActivity(s, cfg, t, region);
 	bool interrupted = s.paused || s.cutscene || s.dead;
 	bool useScripted = !scripted.text.empty() && !interrupted;
 
@@ -260,7 +243,6 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	}
 
 	// --- Line 2: where / when ---------------------------------------------------------------
-	std::optional<RegionInfo> region = Regions::Resolve(s);
 	a.state = region ? region->region : t.unknownRegion;
 	if (region && !region->place.empty())
 	{

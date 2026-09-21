@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "discord/DiscordIPC.h"
 #include "game/GameState.h"
+#include "game/Journal.h"
 #include "game/Regions.h"
 #include "presence/PresenceBuilder.h"
 
@@ -111,22 +112,14 @@ namespace
 			Log::Info("Game state changed: %d -> %d", prev.gameState, cur.gameState);
 		}
 
-		if (cur.playerValid && !(cur.script == prev.script))
+		if (cur.playerValid && !(cur.mission == prev.mission))
 		{
-			Log::Info("Active script: kind=%d name='%s' title='%s' place='%s'",
-				(int)cur.script.kind, cur.script.name.c_str(), cur.script.title.c_str(), cur.script.place.c_str());
+			Log::Info("Mission: kind=%d title='%s'", (int)cur.mission.kind, cur.mission.title.c_str());
 		}
 
 		if (cur.playerValid && cur.bounty != prev.bounty)
 		{
 			Log::Info("Bounty: $%d", cur.bounty);
-		}
-
-		if (cur.playerValid && (cur.journalTarget != prev.journalTarget || cur.lastObjective != prev.lastObjective
-			|| cur.testMission != prev.testMission || cur.validScriptIds != prev.validScriptIds || cur.journal != prev.journal))
-		{
-			Log::FileOnly("Mission research: journalTarget=0x%X lastObjective=0x%X testMission=%d scripts=[%s] journal:%s",
-				(unsigned)cur.journalTarget, (unsigned)cur.lastObjective, cur.testMission, cur.validScriptIds.c_str(), cur.journal.c_str());
 		}
 
 		if (cur.paused != prev.paused)
@@ -139,7 +132,7 @@ namespace
 	{
 		Log::MarkScriptThread();
 		Log::Info("Script fiber started (poll every %d ms)", g_config.pollIntervalMs);
-		GameState::LogMissionLabelHashes();
+		Journal::Init();
 
 		GameSnapshot previous;
 		unsigned tick = 0;
@@ -148,9 +141,9 @@ namespace
 			Log::FlushToConsole();
 			g_lastFiberTickMs = NowMs();
 
-			// Script detection is the expensive part: refresh it every ~2 s.
-			bool refreshScripts = (tick++ % (unsigned)std::max(1, 2000 / g_config.pollIntervalMs)) == 0;
-			GameSnapshot current = GameState::Sample(previous, refreshScripts);
+			// The journal scan is the expensive part: refresh it every ~2 s.
+			bool refreshMission = (tick++ % (unsigned)std::max(1, 2000 / g_config.pollIntervalMs)) == 0;
+			GameSnapshot current = GameState::Sample(previous, refreshMission);
 			LogInterestingChanges(previous, current);
 
 			if (g_config.logLevel == "debug" && current.playerValid)

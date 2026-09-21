@@ -34,7 +34,6 @@ $sources = @(
     "src\Config.cpp",
     "src\discord\DiscordIPC.cpp",
     "src\game\Regions.cpp",
-    "src\game\Scripts.cpp",
     "src\presence\PresenceBuilder.cpp"
 ) | ForEach-Object { '"' + (Join-Path $root $_) + '"' }
 

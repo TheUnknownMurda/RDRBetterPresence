@@ -11,6 +11,7 @@
 #include "discord/DiscordIPC.h"
 #include "game/GameState.h"
 #include "game/Regions.h"
+#include "game/Journal.h"
 #include "presence/PresenceBuilder.h"
 
 #include <cstdarg>
@@ -104,14 +105,13 @@ int main(int argc, char** argv)
 
 	GameSnapshot mission = BaseSnapshot();
 	mission.riding = true; mission.mount = MountKind::Horse; mission.bounty = 250;
-	mission.script = Scripts::Describe(0);   // highest-priority entry of the table = a story mission
+	mission.mission.kind = MissionKind::Story; mission.mission.title = "New Friends, Old Problems";
 	Activity aMission = PresenceBuilder::Build(mission, cfg, 0);
 	printf("[builder] mission   : details='%s' large_text='%s' small='%s'/'%s'\n",
 		aMission.details.c_str(), aMission.largeText.c_str(), aMission.smallImage.c_str(), aMission.smallText.c_str());
 
 	GameSnapshot poker = BaseSnapshot();
 	poker.minigame = true;
-	poker.script.kind = ScriptKind::Minigame; poker.script.name = "poker_arm"; poker.script.title = "Poker"; poker.script.place = "Armadillo";
 	Activity aPoker = PresenceBuilder::Build(poker, cfg, 0);
 	printf("[builder] poker     : details='%s' small='%s'/'%s'\n", aPoker.details.c_str(), aPoker.smallImage.c_str(), aPoker.smallText.c_str());
 
