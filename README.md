@@ -32,17 +32,43 @@ Ce que Discord affiche, mis à jour en temps réel depuis le jeu :
 - `Print` de RedHook **plante le jeu** sur certains messages longs ou riches en crochets : les lignes verbeuses
   vont uniquement dans le fichier log.
 
-## Installation (joueur)
+## Installation
 
-1. Installer [RedHook v0.8](https://github.com/K3rhos/RedHookSDK/releases) : `winmm.dll`, `RedHook.dll`,
-   `RedHook.ini` à la racine du jeu (à côté de `RDR.exe`). Nécessite le VC++ Redistributable x64.
-2. Copier `RDRBetterPresence.red`, `RDRBetterPresence.ini` et `RDRBetterPresence.regions.ini` à la racine du jeu.
-3. Mettre votre *Application ID* Discord dans `RDRBetterPresence.ini` (`ClientId=`).
-4. Lancer Discord, puis le jeu.
+### Automatique (recommandé)
 
-Le plugin écrit `RDRBetterPresence.log` à la racine du jeu et parle aussi dans la console RedHook (F8).
-Commandes utiles dans la console (sans guillemets) : `reload RDRBetterPresence` (relit le `.ini`),
-`unload RDRBetterPresence`, `load RDRBetterPresence`.
+1. Téléchargez `RDRBetterPresence-vX.Y.Z.zip` dans les [Releases](../../releases/latest) et extrayez-le n'importe où.
+2. Dans le dossier extrait, clic droit sur `install.ps1` → **Exécuter avec PowerShell** (ou, dans un terminal :
+   `powershell -ExecutionPolicy Bypass -File .\install.ps1`).
+   Le script trouve le jeu (Rockstar Games Launcher ou Steam), télécharge RedHook v0.8 s'il n'est pas déjà là,
+   et copie le plugin. Si le jeu n'est pas détecté : `.\install.ps1 -GameDir "D:\Chemin\Red Dead Redemption"`.
+3. Lancez Discord, puis le jeu. C'est tout — la présence apparaît sur votre profil Discord.
+
+Prérequis : Windows 10/11, Red Dead Redemption (port PC), Discord (application de bureau), et le
+[Visual C++ Redistributable x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) (requis par RedHook — le script
+vous le signale s'il manque).
+
+### Manuelle
+
+1. [RedHook v0.8](https://github.com/K3rhos/RedHookSDK/releases/download/v0.8/RedHook.v0.8.zip) : copiez
+   `winmm.dll`, `RedHook.dll` et `RedHook.ini` à la racine du jeu (à côté de `RDR.exe`).
+2. Copiez `RDRBetterPresence.red`, `RDRBetterPresence.ini` et `RDRBetterPresence.regions.ini` au même endroit.
+3. Lancez Discord, puis le jeu.
+
+Le fichier `.ini` fourni contient déjà un *Application ID* Discord (l'application « Red Dead Redemption » avec ses
+images). Vous pouvez y mettre le vôtre (`ClientId=`) si vous voulez vos propres images.
+
+### Désinstallation
+
+Supprimez `RDRBetterPresence.red` (et ses `.ini`) du dossier du jeu. Pour retirer aussi RedHook : `winmm.dll`,
+`RedHook.dll`, `RedHook.ini`.
+
+### Dépannage
+
+- Le plugin écrit `RDRBetterPresence.log` à la racine du jeu ; **F8** en jeu ouvre la console RedHook
+  (`unload RDRBetterPresence`, `load RDRBetterPresence`, `reload RDRBetterPresence` — sans guillemets).
+- Image « ? » sur Discord : normal tant que l'application Discord n'a pas d'images pour les clés ci-dessous.
+- Rien ne s'affiche : Discord doit être lancé **avant** le jeu (le plugin réessaie toutes les 10 s), et
+  « Afficher l'activité en cours » doit être activé dans Discord → Paramètres → Statut d'activité.
 
 ## Images (Discord Developer Portal)
 

@@ -18,7 +18,7 @@
 
 namespace
 {
-	constexpr const char* kPluginVersion = "1.0.0";
+	constexpr const char* kPluginVersion = "1.2.0";
 	constexpr const char* kIniName = "RDRBetterPresence.ini";
 	constexpr const char* kRegionsIniName = "RDRBetterPresence.regions.ini";
 	constexpr const char* kLogName = "RDRBetterPresence.log";
