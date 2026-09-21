@@ -1,0 +1,16 @@
+# Build output
+build/
+*.pdb
+*.ilk
+*.exp
+*.iobj
+*.ipdb
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.vcxproj.filters
+
+# Logs produced when running from this folder
+*.log
