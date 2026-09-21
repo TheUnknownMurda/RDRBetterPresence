@@ -10,7 +10,7 @@ struct Config
 	int reconnectDelayMs = 10000;     // delay before retrying to connect to Discord
 
 	// [Presence]
-	std::string language = "fr";      // "fr" or "en"
+	std::string language = "en";      // "en" or "fr"
 	bool showTimeOfDay = true;
 	bool showWeather = true;
 	bool showHealth = true;
