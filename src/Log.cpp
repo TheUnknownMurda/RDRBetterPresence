@@ -152,3 +152,19 @@ void Log::Write(LogLevel level, const char* format, ...)
 		}
 	}
 }
+
+void Log::FileOnly(const char* format, ...)
+{
+	char buffer[4096];
+	va_list args;
+	va_start(args, format);
+	vsnprintf(buffer, sizeof(buffer), format, args);
+	va_end(args);
+
+	std::lock_guard<std::mutex> lock(g_mutex);
+	if (g_toFile && g_file.is_open())
+	{
+		g_file << Timestamp() << " [FILE ] " << buffer << std::endl;
+		g_file.flush();
+	}
+}

@@ -26,6 +26,10 @@ namespace Log
 
 	void Write(LogLevel level, const char* format, ...);
 
+	// File only: never forwarded to the RedHook console. Use for verbose research output -
+	// RedHook's Print has crashed the game on some long / bracket-heavy messages.
+	void FileOnly(const char* format, ...);
+
 	template <typename... Args>
 	inline void Debug(const char* format, Args... args) { Write(LogLevel::Debug, format, args...); }
 	template <typename... Args>

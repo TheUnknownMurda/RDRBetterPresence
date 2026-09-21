@@ -125,7 +125,7 @@ namespace
 		if (cur.playerValid && (cur.journalTarget != prev.journalTarget || cur.lastObjective != prev.lastObjective
 			|| cur.testMission != prev.testMission || cur.validScriptIds != prev.validScriptIds || cur.journal != prev.journal))
 		{
-			Log::Info("Mission research: journalTarget=0x%X lastObjective=0x%X testMission=%d scripts=[%s] journal:%s",
+			Log::FileOnly("Mission research: journalTarget=0x%X lastObjective=0x%X testMission=%d scripts=[%s] journal:%s",
 				(unsigned)cur.journalTarget, (unsigned)cur.lastObjective, cur.testMission, cur.validScriptIds.c_str(), cur.journal.c_str());
 		}
 

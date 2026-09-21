@@ -311,7 +311,7 @@ namespace
 			snprintf(label, sizeof(label), "miss%d", n);
 			snprintf(shortLabel, sizeof(shortLabel), "miss%d_short", n);
 			snprintf(line, sizeof(line), "hash(%s)=0x%08X hash(%s)=0x%08X", label, STRING::STRING_TO_HASH(label), shortLabel, STRING::STRING_TO_HASH(shortLabel));
-			Log::Info("%s", line);
+			Log::FileOnly("%s", line);
 		}
 	}
 }
