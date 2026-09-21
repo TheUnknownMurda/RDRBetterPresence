@@ -76,12 +76,6 @@ struct GameSnapshot
 	// Scripted activity (story mission, stranger, minigame...). Refreshed less often than the rest.
 	ActiveScript script;
 
-	// Raw script globals, logged for research (see Globals in GameState.cpp).
-	int globalWordSize = 0;      // 0 = not validated, 4 or 8 once the layout is confirmed
-	int globalLastMission = -1;
-	int globalWanted = -1;
-	int globalVolume = -1;
-
 	bool operator==(const GameSnapshot&) const = default;
 };
 
@@ -90,4 +84,7 @@ namespace GameState
 	// Must be called from the RedHook script fiber. `previous` supplies the fields that are
 	// refreshed only every few samples (script detection).
 	GameSnapshot Sample(const GameSnapshot& previous, bool refreshScripts);
+
+	// Research aid (F9 in game): writes every SAG player stat as int and float to `path`.
+	bool DumpStats(const std::string& path);
 }

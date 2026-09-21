@@ -21,6 +21,9 @@ namespace
 	constexpr const char* kIniName = "RDRBetterPresence.ini";
 	constexpr const char* kRegionsIniName = "RDRBetterPresence.regions.ini";
 	constexpr const char* kLogName = "RDRBetterPresence.log";
+	constexpr const char* kStatsDumpName = "RDRBetterPresence.stats.txt";
+
+	std::string g_directory;
 
 	Config g_config;
 	long long g_sessionStart = 0;
@@ -121,13 +124,6 @@ namespace
 			Log::Info("Stats: money=%d honor=%d fame=%d bounty=%d", cur.money, cur.honor, cur.fame, cur.bounty);
 		}
 
-		if (cur.playerValid && (cur.globalWordSize != prev.globalWordSize || cur.globalLastMission != prev.globalLastMission
-			|| cur.globalWanted != prev.globalWanted || cur.globalVolume != prev.globalVolume))
-		{
-			Log::Info("Globals: wordSize=%d lastMission=%d wanted=%d volume=%d (at x=%.0f z=%.0f)",
-				cur.globalWordSize, cur.globalLastMission, cur.globalWanted, cur.globalVolume, cur.posX, cur.posZ);
-		}
-
 		if (cur.paused != prev.paused)
 		{
 			Log::Info("IS_GAME_PAUSED -> %d", cur.paused);
@@ -150,6 +146,11 @@ namespace
 			bool refreshScripts = (tick++ % (unsigned)std::max(1, 2000 / g_config.pollIntervalMs)) == 0;
 			GameSnapshot current = GameState::Sample(previous, refreshScripts);
 			LogInterestingChanges(previous, current);
+
+			if (current.playerValid && REDHOOK::IS_KEY_PRESSED(KEY_F9))
+			{
+				GameState::DumpStats(g_directory + kStatsDumpName);
+			}
 
 			if (g_config.logLevel == "debug" && current.playerValid)
 			{
@@ -258,6 +259,7 @@ namespace
 void Plugin::Initialize(HMODULE module)
 {
 	std::string dir = ModuleDirectory(module);
+	g_directory = dir;
 	std::string iniPath = dir + kIniName;
 
 	if (!FileExists(iniPath))

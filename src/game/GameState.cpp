@@ -27,7 +27,6 @@ namespace
 		int gameState;
 		char playerName[64];
 		int money, honor, fame, bounty;
-		int globalWordSize, globalLastMission, globalWanted, globalVolume;
 	};
 
 	// Stat ids (Foxxyyy, RDR_Stats.c)
@@ -35,66 +34,6 @@ namespace
 	constexpr int kStatHonor = 1;
 	constexpr int kStatFame = 3;
 	constexpr int kStatBounty = 222;
-
-	// Script global indices (Foxxyyy / Cain532, RDR_Globals.c). The word size of the globals
-	// block on PC is unknown, so it is validated at runtime by comparing the PlayerActor
-	// global with GET_PLAYER_ACTOR().
-	constexpr int kGlobalPlayerActor = 34573;
-	constexpr int kGlobalLastMission = 6269;
-	constexpr int kGlobalWanted = 3403;
-	constexpr int kGlobalLocalSlot = 29006;
-	constexpr int kGlobalRegionSector = 29155;   // array, 10 words per element, volume id at +8
-
-	bool IsReadable(const void* p, size_t size)
-	{
-		MEMORY_BASIC_INFORMATION mbi{};
-		if (!p || !VirtualQuery(p, &mbi, sizeof(mbi))) return false;
-		if (mbi.State != MEM_COMMIT || (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD))) return false;
-		return (const char*)p + size <= (const char*)mbi.BaseAddress + mbi.RegionSize;
-	}
-
-	int ReadGlobal(uintptr_t base, int wordSize, long long index)
-	{
-		const void* addr = (const void*)(base + (uintptr_t)(index * wordSize));
-		return IsReadable(addr, 4) ? *(const int*)addr : -1;
-	}
-
-	// Figures out the globals layout once, then reads the few globals we log.
-	void ReadGlobals(RawSnapshot& r, Actor player)
-	{
-		static int s_wordSize = 0;
-		static bool s_probed = false;
-
-		uintptr_t base = GetGlobalPtr();
-		if (base == 0)
-		{
-			return;
-		}
-
-		if (!s_probed)
-		{
-			s_probed = true;
-			int at8 = ReadGlobal(base, 8, kGlobalPlayerActor);
-			int at4 = ReadGlobal(base, 4, kGlobalPlayerActor);
-			if (at8 == player) s_wordSize = 8;
-			else if (at4 == player) s_wordSize = 4;
-			Log::Info("Globals probe: base=0x%llX player=%d PlayerActor@8=%d PlayerActor@4=%d -> wordSize=%d",
-				(unsigned long long)base, player, at8, at4, s_wordSize);
-		}
-
-		r.globalWordSize = s_wordSize;
-		if (s_wordSize == 0)
-		{
-			return;
-		}
-
-		r.globalLastMission = ReadGlobal(base, s_wordSize, kGlobalLastMission);
-		r.globalWanted = ReadGlobal(base, s_wordSize, kGlobalWanted);
-
-		int slot = ReadGlobal(base, s_wordSize, kGlobalLocalSlot);
-		if (slot < 0 || slot > 32) slot = 0;
-		r.globalVolume = ReadGlobal(base, s_wordSize, kGlobalRegionSector + 1 + (long long)slot * 10 + 8);
-	}
 
 	void CopyStr(char* dst, size_t dstSize, const char* src)
 	{
@@ -212,10 +151,6 @@ namespace
 		r.honor = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatHonor) + 0.5f);
 		r.fame = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatFame) + 0.5f);
 		r.bounty = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatBounty) + 0.5f);
-
-		// Research: raw script globals
-		r.globalLastMission = r.globalWanted = r.globalVolume = -1;
-		ReadGlobals(r, player);
 	}
 
 	// Returns false if a native blew up (access violation etc.) - the game keeps running
@@ -230,6 +165,35 @@ namespace
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
 			return false;
+		}
+	}
+
+	// Writes every SAG player stat (as int and as float) to a file, to identify stat ids.
+	// Foxxyyy counted 696 stats in the scripts.
+	constexpr int kStatCount = 700;
+
+	int DumpStatsRaw(FILE* f)
+	{
+		int written = 0;
+		for (int id = 0; id < kStatCount; ++id)
+		{
+			int i = STAT::GET_SAGPLAYER_STAT_INT(id);
+			float fl = STAT::GET_SAGPLAYER_STAT_FLOAT(id);
+			fprintf(f, "%d\t%d\t%g\n", id, i, fl);
+			++written;
+		}
+		return written;
+	}
+
+	int DumpStatsGuarded(FILE* f)
+	{
+		__try
+		{
+			return DumpStatsRaw(f);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return -1;
 		}
 	}
 
@@ -305,10 +269,6 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 	s.honor = r.honor;
 	s.fame = r.fame;
 	s.bounty = r.bounty;
-	s.globalWordSize = r.globalWordSize;
-	s.globalLastMission = r.globalLastMission;
-	s.globalWanted = r.globalWanted;
-	s.globalVolume = r.globalVolume;
 
 	// Script detection is ~200 native calls, so it is refreshed every few samples only.
 	static bool s_scriptsDisabled = false;
@@ -328,4 +288,24 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 		}
 	}
 	return s;
+}
+
+bool GameState::DumpStats(const std::string& path)
+{
+	FILE* f = nullptr;
+	if (fopen_s(&f, path.c_str(), "w") != 0 || !f)
+	{
+		Log::Error("Cannot write %s", path.c_str());
+		return false;
+	}
+	fprintf(f, "id\tint\tfloat\n");
+	int n = DumpStatsGuarded(f);
+	fclose(f);
+	if (n < 0)
+	{
+		Log::Error("Exception while dumping stats (partial file written)");
+		return false;
+	}
+	Log::Info("Dumped %d stats to %s", n, path.c_str());
+	return true;
 }
