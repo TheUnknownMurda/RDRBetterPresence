@@ -41,7 +41,7 @@ static GameSnapshot BaseSnapshot()
 	GameSnapshot s;
 	s.playerValid = true;
 	s.district = "Cholla Springs";
-	s.posX = 2700.0f; s.posY = -1600.0f; s.posZ = 40.0f;
+	s.posX = -2176.0f; s.posY = 16.0f; s.posZ = 2614.0f;   // Armadillo (Y is up)
 	s.hour = 14; s.minute = 37;
 	s.weather = WEATHER_CLOUDY;
 	s.health = 850.0f; s.maxHealth = 1000.0f;
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
 	GameSnapshot ride = BaseSnapshot();
 	ride.riding = true; ride.mount = MountKind::Horse; ride.weapon = WEAPON_INVALID; ride.weaponCategory = WEAPON_CATEGORY_INVALID; ride.weaponName.clear();
-	ride.district = "Rio Bravo"; ride.weather = WEATHER_STORMY; ride.hour = 22; ride.minute = 5;
+	ride.posX = -2400.0f; ride.posZ = 3300.0f; ride.weather = WEATHER_STORMY; ride.hour = 22; ride.minute = 5;
 	Activity aRide = PresenceBuilder::Build(ride, cfg, 0);
 	printf("[builder] riding    : details='%s' state='%s' large='%s' small='%s'/'%s'\n",
 		aRide.details.c_str(), aRide.state.c_str(), aRide.largeImage.c_str(), aRide.smallImage.c_str(), aRide.smallText.c_str());

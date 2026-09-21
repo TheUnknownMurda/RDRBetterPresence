@@ -192,7 +192,11 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 
 	// --- Line 2: where / when ---------------------------------------------------------------
 	std::optional<RegionInfo> region = Regions::Resolve(s);
-	a.state = region ? region->name : t.unknownRegion;
+	a.state = region ? region->region : t.unknownRegion;
+	if (region && !region->place.empty())
+	{
+		a.state += kSeparator + region->place;
+	}
 
 	if (cfg.showTimeOfDay)
 	{
@@ -209,14 +213,15 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	if (cfg.showCoordinates)
 	{
 		char buf[64];
-		snprintf(buf, sizeof(buf), " (%.0f, %.0f)", s.posX, s.posY);
+		// Y is the altitude in this game; the map plane is (X, Z).
+		snprintf(buf, sizeof(buf), " (%.0f, %.0f)", s.posX, s.posZ);
 		a.state += buf;
 	}
 
 	// --- Images -------------------------------------------------------------------------------
 	if (region && cfg.useRegionImages)
 	{
-		a.largeImage = "region_" + region->slug;
+		a.largeImage = "region_" + region->regionSlug;
 	}
 
 	std::string character = (s.character == PlayerCharacter::Jack) ? t.jack : t.john;

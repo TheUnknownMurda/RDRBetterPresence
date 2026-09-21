@@ -72,10 +72,17 @@ namespace
 			Log::Info("Player is no longer valid (menus / loading), gameState=%d", cur.gameState);
 		}
 
-		if (cur.playerValid && cur.district != prev.district)
+		if (cur.playerValid)
 		{
-			Log::Info("District changed: '%s' -> '%s' at (%.1f, %.1f, %.1f)",
-				prev.district.c_str(), cur.district.c_str(), cur.posX, cur.posY, cur.posZ);
+			std::optional<RegionInfo> before = prev.playerValid ? Regions::Resolve(prev) : std::nullopt;
+			std::optional<RegionInfo> after = Regions::Resolve(cur);
+			std::string beforeText = before ? before->region + "/" + before->place : "?";
+			std::string afterText = after ? after->region + "/" + after->place : "?";
+			if (beforeText != afterText)
+			{
+				Log::Info("Location changed: %s -> %s at x=%.0f z=%.0f (y=%.0f, district='%s')",
+					beforeText.c_str(), afterText.c_str(), cur.posX, cur.posZ, cur.posY, cur.district.c_str());
+			}
 		}
 
 		if (cur.playerValid && cur.weapon != prev.weapon)

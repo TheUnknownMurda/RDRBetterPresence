@@ -4,29 +4,75 @@
 
 namespace
 {
+	// -------------------------------------------------------------------------------------------
+	// Built-in landmarks. Coordinates (x, z) come from community teleport tables for the PC port
+	// (connor-ms/RDR-Trainer, TheRouletteBoi/RedDeadRedemption_PS3); region membership from the
+	// Red Dead wiki. Units are roughly metres; a radius of ~200 covers a town.
+	// -------------------------------------------------------------------------------------------
+	struct Landmark
+	{
+		const char* name;
+		const char* region;
+		float x, z;
+		float radius;
+	};
+
+	constexpr const char* kChollaSprings  = "Cholla Springs";
+	constexpr const char* kRioBravo       = "R\xC3\xADo Bravo";        // Río Bravo
+	constexpr const char* kGaptoothRidge  = "Gaptooth Ridge";
+	constexpr const char* kHennigansStead = "Hennigan's Stead";
+	constexpr const char* kPuntaOrgullo   = "Punta Orgullo";
+	constexpr const char* kPerdido        = "Perdido";
+	constexpr const char* kDiezCoronas    = "Diez Coronas";
+	constexpr const char* kTallTrees      = "Tall Trees";
+	constexpr const char* kGreatPlains    = "Great Plains";
+
+	const Landmark kLandmarks[] =
+	{
+		// --- New Austin ---
+		{ "Armadillo",              kChollaSprings,  -2176.0f, 2614.0f, 260.0f },
+		{ "Coot's Chapel",          kChollaSprings,  -1793.0f, 2837.0f, 150.0f },
+		{ "Twin Rocks",             kChollaSprings,  -2425.0f, 2139.0f, 150.0f },
+		{ "Lake Don Julio",         kChollaSprings,  -1955.0f, 3256.0f, 250.0f },
+		{ "Ridgewood Farm",         kChollaSprings,  -3275.0f, 2720.0f, 180.0f },
+		{ "Fort Mercer",            kRioBravo,       -2623.0f, 3391.0f, 220.0f },
+		{ "Plainview",              kRioBravo,       -3126.0f, 3724.0f, 220.0f },
+		{ "Tumbleweed",             kGaptoothRidge,  -4007.0f, 2935.0f, 240.0f },
+		{ "Gaptooth Breach",        kGaptoothRidge,  -4462.0f, 3310.0f, 220.0f },
+		{ "Rathskeller Fork",       kGaptoothRidge,  -3662.0f, 2125.0f, 200.0f },
+		{ "Benedict Point",         kGaptoothRidge,  -3687.0f, 3493.0f, 200.0f },
+		{ "MacFarlane's Ranch",     kHennigansStead,  -887.0f, 2421.0f, 300.0f },
+		{ "Thieves' Landing",       kHennigansStead,   112.0f, 2319.0f, 250.0f },
+		{ "Pacific Union Camp",     kHennigansStead,  -274.0f, 2113.0f, 160.0f },
+
+		// --- Nuevo Paraíso ---
+		{ "Escalera",               kPuntaOrgullo,   -4279.0f, 4448.0f, 280.0f },
+		{ "Nosalida",               kPuntaOrgullo,   -4702.0f, 3959.0f, 180.0f },
+		{ "Tesoro Azul",            kPuntaOrgullo,   -3288.0f, 4547.0f, 200.0f },
+		{ "Chuparosa",              kPerdido,        -2715.0f, 4252.0f, 260.0f },
+		{ "Las Hermanas",           kPerdido,        -1700.0f, 4242.0f, 200.0f },
+		{ "Agave Viejo",            kPerdido,        -1545.0f, 3913.0f, 180.0f },
+		{ "El Presidio",            kDiezCoronas,     -698.0f, 3323.0f, 240.0f },
+		{ "Casa Madrugada",         kDiezCoronas,     -789.0f, 3730.0f, 200.0f },
+		{ "El Matadero",            kDiezCoronas,     -455.0f, 3927.0f, 180.0f },
+		{ "Torquemada",             kDiezCoronas,      377.0f, 3460.0f, 220.0f },
+
+		// --- West Elizabeth ---
+		{ "Blackwater",             kGreatPlains,      711.0f, 1253.0f, 350.0f },
+		{ "Beecher's Hope",         kGreatPlains,      -83.0f, 1374.0f, 220.0f },
+		{ "Wreck of the Serendipity", kGreatPlains,    325.0f, 1940.0f, 150.0f },
+		{ "Manzanita Post",         kTallTrees,       -428.0f, 1616.0f, 200.0f },
+		{ "Cochinay",               kTallTrees,       -739.0f,  785.0f, 200.0f },
+	};
+
 	struct Rect
 	{
 		std::string name;
-		float xMin, yMin, xMax, yMax;
+		float xMin, zMin, xMax, zMax;
 	};
 
-	// Smaller rectangles first so towns inside a region win over the region itself.
+	// Smaller rectangles first so a town inside a region rectangle wins over the region.
 	std::vector<Rect> g_overrides;
-
-	// Known GXT-style labels -> display names, in case the game hands us a label
-	// instead of the localized text. Extend as new values show up in the log.
-	const std::unordered_map<std::string, std::string> kLabelToName =
-	{
-		{ "DIST_CHOLLA",     "Cholla Springs" },
-		{ "DIST_RIOBRAVO",   "Rio Bravo" },
-		{ "DIST_GAPTOOTH",   "Gaptooth Ridge" },
-		{ "DIST_HENNIGAN",   "Hennigan's Stead" },
-		{ "DIST_DIEZ",       "Diez Coronas" },
-		{ "DIST_PUNTA",      "Punta Orgullosa" },
-		{ "DIST_PERDIDO",    "Perdido" },
-		{ "DIST_TALLTREES",  "Tall Trees" },
-		{ "DIST_GREATPLAINS","Great Plains" },
-	};
 
 	// Strip the most common accented characters (UTF-8) so slugs stay ASCII.
 	std::string StripAccents(std::string_view in)
@@ -125,17 +171,17 @@ void Regions::LoadOverrides(const std::string& iniPath)
 		int n = sscanf_s(values.c_str(), "%f,%f,%f,%f", &v[0], &v[1], &v[2], &v[3]);
 		if (n != 4)
 		{
-			Log::Warning("regions.ini: cannot parse '%s' (expected Name=xmin,ymin,xmax,ymax)", line.c_str());
+			Log::Warning("regions.ini: cannot parse '%s' (expected Name=xmin,zmin,xmax,zmax)", line.c_str());
 			continue;
 		}
 		r.xMin = std::min(v[0], v[2]); r.xMax = std::max(v[0], v[2]);
-		r.yMin = std::min(v[1], v[3]); r.yMax = std::max(v[1], v[3]);
+		r.zMin = std::min(v[1], v[3]); r.zMax = std::max(v[1], v[3]);
 		g_overrides.push_back(r);
 	}
 
 	std::sort(g_overrides.begin(), g_overrides.end(), [](const Rect& a, const Rect& b)
 	{
-		return (a.xMax - a.xMin) * (a.yMax - a.yMin) < (b.xMax - b.xMin) * (b.yMax - b.yMin);
+		return (a.xMax - a.xMin) * (a.zMax - a.zMin) < (b.xMax - b.xMin) * (b.zMax - b.zMin);
 	});
 
 	Log::Info("Loaded %zu region override(s) from regions.ini", g_overrides.size());
@@ -143,22 +189,50 @@ void Regions::LoadOverrides(const std::string& iniPath)
 
 std::optional<RegionInfo> Regions::Resolve(const GameSnapshot& s)
 {
-	// 1. User-defined rectangles (towns, landmarks) have priority: they are more precise.
-	for (const Rect& r : g_overrides)
+	// Nearest built-in landmark decides the region; it also names the place when close.
+	const Landmark* nearest = nullptr;
+	float nearestDist2 = 0.0f;
+	for (const Landmark& l : kLandmarks)
 	{
-		if (s.posX >= r.xMin && s.posX <= r.xMax && s.posY >= r.yMin && s.posY <= r.yMax)
+		float dx = s.posX - l.x;
+		float dz = s.posZ - l.z;
+		float d2 = dx * dx + dz * dz;
+		if (!nearest || d2 < nearestDist2)
 		{
-			return RegionInfo{ r.name, Slugify(r.name) };
+			nearest = &l;
+			nearestDist2 = d2;
 		}
 	}
 
-	// 2. What the game says.
-	if (!s.district.empty())
+	RegionInfo info;
+	if (nearest)
 	{
-		auto it = kLabelToName.find(s.district);
-		std::string name = (it != kLabelToName.end()) ? it->second : s.district;
-		return RegionInfo{ name, Slugify(name) };
+		info.region = nearest->region;
+		info.regionSlug = Slugify(nearest->region);
+		if (nearestDist2 <= nearest->radius * nearest->radius)
+		{
+			info.place = nearest->name;
+		}
 	}
 
-	return std::nullopt;
+	// User rectangles override the place name (and the region when none is known).
+	for (const Rect& r : g_overrides)
+	{
+		if (s.posX >= r.xMin && s.posX <= r.xMax && s.posZ >= r.zMin && s.posZ <= r.zMax)
+		{
+			info.place = r.name;
+			if (info.region.empty())
+			{
+				info.region = r.name;
+				info.regionSlug = Slugify(r.name);
+			}
+			break;
+		}
+	}
+
+	if (info.region.empty())
+	{
+		return std::nullopt;
+	}
+	return info;
 }
