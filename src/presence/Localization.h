@@ -29,6 +29,14 @@ struct Strings
 	const char* indoors;
 	const char* exploring;
 
+	// Scripted activities
+	const char* missionPrefix;   // "Mission: "
+	const char* strangerPrefix;  // "Stranger: "
+	const char* playingPrefix;   // "Playing "
+	const char* wanted;          // "Wanted"
+	const char* honorLabel;
+	const char* fameLabel;
+
 	// Fragments
 	const char* hp;             // "PV" / "HP"
 	const char* deadEyeShort;   // "Dead Eye"
@@ -77,6 +85,13 @@ namespace Localization
 		"Ivre",
 		"À l'intérieur",
 		"Exploration libre",
+
+		"Mission : ",
+		"Inconnu : ",
+		"Partie de ",
+		"Recherché",
+		"Honneur",
+		"Renommée",
 
 		"PV",
 		"Dead Eye",
@@ -185,6 +200,13 @@ namespace Localization
 		"Indoors",
 		"Free roaming",
 
+		"Mission: ",
+		"Stranger: ",
+		"Playing ",
+		"Wanted",
+		"Honor",
+		"Fame",
+
 		"HP",
 		"Dead Eye",
 		"Somewhere out West",
@@ -270,5 +292,23 @@ namespace Localization
 	inline const Strings& Get(const std::string& language)
 	{
 		return language == "fr" ? kFrench : kEnglish;
+	}
+
+	// Minigame / job titles are stored in English in the script table; translate on display.
+	inline std::string TranslateActivity(const std::string& language, const std::string& title)
+	{
+		if (language != "fr") return title;
+		static const std::pair<const char*, const char*> kMap[] =
+		{
+			{ "Poker", "poker" }, { "Blackjack", "blackjack" }, { "Liar's Dice", "dés menteurs" },
+			{ "Horseshoes", "fers à cheval" }, { "Five Finger Fillet", "jeu du couteau" }, { "Arm Wrestling", "bras de fer" },
+			{ "Night Watch", "Veilleur de nuit" }, { "Horsebreaking", "Dressage de chevaux" },
+			{ "Bounty hunting", "Chasse à la prime" }, { "Duel", "Duel" },
+		};
+		for (const auto& [en, fr] : kMap)
+		{
+			if (title == en) return fr;
+		}
+		return title;
 	}
 }

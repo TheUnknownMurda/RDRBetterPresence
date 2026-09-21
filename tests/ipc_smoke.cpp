@@ -101,6 +101,24 @@ int main(int argc, char** argv)
 	cfg.language = "en";
 	Activity aRideEn = PresenceBuilder::Build(ride, cfg, 0);
 	printf("[builder] riding EN : details='%s' state='%s'\n", aRideEn.details.c_str(), aRideEn.state.c_str());
+
+	GameSnapshot mission = BaseSnapshot();
+	mission.riding = true; mission.mount = MountKind::Horse; mission.bounty = 250; mission.money = 1234; mission.honor = 40; mission.fame = 12;
+	mission.script = Scripts::Describe(0);   // highest-priority entry of the table = a story mission
+	Activity aMission = PresenceBuilder::Build(mission, cfg, 0);
+	printf("[builder] mission   : details='%s' large_text='%s' small='%s'/'%s'\n",
+		aMission.details.c_str(), aMission.largeText.c_str(), aMission.smallImage.c_str(), aMission.smallText.c_str());
+
+	GameSnapshot poker = BaseSnapshot();
+	poker.minigame = true;
+	poker.script.kind = ScriptKind::Minigame; poker.script.name = "poker_arm"; poker.script.title = "Poker"; poker.script.place = "Armadillo";
+	Activity aPoker = PresenceBuilder::Build(poker, cfg, 0);
+	printf("[builder] poker     : details='%s' small='%s'/'%s'\n", aPoker.details.c_str(), aPoker.smallImage.c_str(), aPoker.smallText.c_str());
+
+	GameSnapshot paused = mission;
+	paused.paused = true;
+	Activity aPaused = PresenceBuilder::Build(paused, cfg, 0);
+	printf("[builder] paused    : details='%s' small='%s'\n", aPaused.details.c_str(), aPaused.smallImage.c_str());
 	cfg.language = "fr";
 
 	if (Regions::Slugify("MacFarlane's Ranch") != "macfarlane_s_ranch" || Regions::Slugify("R\xC3\xADo Bravo") != "rio_bravo")
@@ -120,7 +138,7 @@ int main(int argc, char** argv)
 	printf("[ipc] connected + READY\n");
 
 	long long start = (long long)time(nullptr);
-	const Activity* sequence[] = { &aRoam, &aFight, &aRide };
+	const Activity* sequence[] = { &aRoam, &aMission, &aPoker };
 	int perStep = seconds / 3; if (perStep < 1) perStep = 1;
 
 	for (const Activity* a : sequence)

@@ -26,7 +26,71 @@ namespace
 		int outfit;
 		int gameState;
 		char playerName[64];
+		int money, honor, fame, bounty;
+		int globalWordSize, globalLastMission, globalWanted, globalVolume;
 	};
+
+	// Stat ids (Foxxyyy, RDR_Stats.c)
+	constexpr int kStatMoney = 0;
+	constexpr int kStatHonor = 1;
+	constexpr int kStatFame = 3;
+	constexpr int kStatBounty = 222;
+
+	// Script global indices (Foxxyyy / Cain532, RDR_Globals.c). The word size of the globals
+	// block on PC is unknown, so it is validated at runtime by comparing the PlayerActor
+	// global with GET_PLAYER_ACTOR().
+	constexpr int kGlobalPlayerActor = 34573;
+	constexpr int kGlobalLastMission = 6269;
+	constexpr int kGlobalWanted = 3403;
+	constexpr int kGlobalLocalSlot = 29006;
+	constexpr int kGlobalRegionSector = 29155;   // array, 10 words per element, volume id at +8
+
+	bool IsReadable(const void* p, size_t size)
+	{
+		MEMORY_BASIC_INFORMATION mbi{};
+		if (!p || !VirtualQuery(p, &mbi, sizeof(mbi))) return false;
+		if (mbi.State != MEM_COMMIT || (mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD))) return false;
+		return (const char*)p + size <= (const char*)mbi.BaseAddress + mbi.RegionSize;
+	}
+
+	int ReadGlobal(uintptr_t base, int wordSize, long long index)
+	{
+		const void* addr = (const void*)(base + (uintptr_t)(index * wordSize));
+		return IsReadable(addr, 4) ? *(const int*)addr : -1;
+	}
+
+	// Figures out the globals layout once, then reads the few globals we log.
+	void ReadGlobals(RawSnapshot& r, Actor player)
+	{
+		static int s_wordSize = 0;
+		static bool s_probed = false;
+
+		uintptr_t base = GetGlobalPtr();
+		if (base == 0)
+		{
+			return;
+		}
+
+		if (!s_probed)
+		{
+			s_probed = true;
+			if (ReadGlobal(base, 8, kGlobalPlayerActor) == player) s_wordSize = 8;
+			else if (ReadGlobal(base, 4, kGlobalPlayerActor) == player) s_wordSize = 4;
+		}
+
+		r.globalWordSize = s_wordSize;
+		if (s_wordSize == 0)
+		{
+			return;
+		}
+
+		r.globalLastMission = ReadGlobal(base, s_wordSize, kGlobalLastMission);
+		r.globalWanted = ReadGlobal(base, s_wordSize, kGlobalWanted);
+
+		int slot = ReadGlobal(base, s_wordSize, kGlobalLocalSlot);
+		if (slot < 0 || slot > 32) slot = 0;
+		r.globalVolume = ReadGlobal(base, s_wordSize, kGlobalRegionSector + 1 + (long long)slot * 10 + 8);
+	}
 
 	void CopyStr(char* dst, size_t dstSize, const char* src)
 	{
@@ -136,6 +200,16 @@ namespace
 			r.weaponCategory = WEAPON::GET_WEAPON_CATEGORY_FROM_ENUM((WeaponModel)r.weapon);
 			CopyStr(r.weaponName, sizeof(r.weaponName), WEAPON::GET_WEAPON_DISPLAY_NAME((WeaponModel)r.weapon));
 		}
+
+		// Stats
+		r.money = STAT::GET_SAGPLAYER_STAT_INT(kStatMoney);
+		r.honor = STAT::GET_SAGPLAYER_STAT_INT(kStatHonor);
+		r.fame = STAT::GET_SAGPLAYER_STAT_INT(kStatFame);
+		r.bounty = STAT::GET_SAGPLAYER_STAT_INT(kStatBounty);
+
+		// Research: raw script globals
+		r.globalLastMission = r.globalWanted = r.globalVolume = -1;
+		ReadGlobals(r, player);
 	}
 
 	// Returns false if a native blew up (access violation etc.) - the game keeps running
@@ -152,9 +226,21 @@ namespace
 			return false;
 		}
 	}
+
+	int DetectScriptGuarded()
+	{
+		__try
+		{
+			return Scripts::DetectIndex();
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return -2;
+		}
+	}
 }
 
-GameSnapshot GameState::Sample()
+GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts)
 {
 	RawSnapshot r{};
 	static int s_failures = 0;
@@ -209,5 +295,31 @@ GameSnapshot GameState::Sample()
 	s.character = r.character;
 	s.outfit = r.outfit;
 	s.playerName = r.playerName;
+	s.money = r.money;
+	s.honor = r.honor;
+	s.fame = r.fame;
+	s.bounty = r.bounty;
+	s.globalWordSize = r.globalWordSize;
+	s.globalLastMission = r.globalLastMission;
+	s.globalWanted = r.globalWanted;
+	s.globalVolume = r.globalVolume;
+
+	// Script detection is ~200 native calls, so it is refreshed every few samples only.
+	static bool s_scriptsDisabled = false;
+	s.script = previous.script;
+	if (refreshScripts && !s_scriptsDisabled)
+	{
+		int index = DetectScriptGuarded();
+		if (index == -2)
+		{
+			Log::Error("Exception during script detection - mission names disabled for this session");
+			s_scriptsDisabled = true;
+			s.script = ActiveScript{};
+		}
+		else
+		{
+			s.script = Scripts::Describe(index);
+		}
+	}
 	return s;
 }

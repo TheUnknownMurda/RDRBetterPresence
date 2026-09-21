@@ -43,6 +43,9 @@ Config Config::Load(const std::string& ini)
 	c.showHealth        = ReadBool(ini, "Presence", "ShowHealth", c.showHealth);
 	c.showWeapon        = ReadBool(ini, "Presence", "ShowWeapon", c.showWeapon);
 	c.showOutfit        = ReadBool(ini, "Presence", "ShowOutfit", c.showOutfit);
+	c.showMoney         = ReadBool(ini, "Presence", "ShowMoney", c.showMoney);
+	c.showBounty        = ReadBool(ini, "Presence", "ShowBounty", c.showBounty);
+	c.showMissions      = ReadBool(ini, "Presence", "ShowMissions", c.showMissions);
 	c.showCoordinates   = ReadBool(ini, "Presence", "ShowCoordinates", c.showCoordinates);
 	c.largeImageDefault = ReadString(ini, "Presence", "LargeImageDefault", c.largeImageDefault);
 	c.useRegionImages   = ReadBool(ini, "Presence", "UseRegionImages", c.useRegionImages);

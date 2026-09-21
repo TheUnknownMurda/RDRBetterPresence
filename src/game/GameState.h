@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Scripts.h"
+
 // Snapshot of everything the presence needs, sampled on the RedHook script fiber
 // (natives may only be called from there) and consumed by the Discord worker thread.
 
@@ -65,11 +67,27 @@ struct GameSnapshot
 	int gameState = 0;
 	std::string playerName;
 
+	// Player stats (SAG player stat ids documented by the community: 0 money, 1 honor, 3 fame, 222 bounty)
+	int money = 0;
+	int honor = 0;
+	int fame = 0;
+	int bounty = 0;
+
+	// Scripted activity (story mission, stranger, minigame...). Refreshed less often than the rest.
+	ActiveScript script;
+
+	// Raw script globals, logged for research (see Globals in GameState.cpp).
+	int globalWordSize = 0;      // 0 = not validated, 4 or 8 once the layout is confirmed
+	int globalLastMission = -1;
+	int globalWanted = -1;
+	int globalVolume = -1;
+
 	bool operator==(const GameSnapshot&) const = default;
 };
 
 namespace GameState
 {
-	// Must be called from the RedHook script fiber.
-	GameSnapshot Sample();
+	// Must be called from the RedHook script fiber. `previous` supplies the fields that are
+	// refreshed only every few samples (script detection).
+	GameSnapshot Sample(const GameSnapshot& previous, bool refreshScripts);
 }

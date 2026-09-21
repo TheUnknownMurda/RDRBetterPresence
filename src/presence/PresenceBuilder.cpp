@@ -125,12 +125,69 @@ namespace
 		const char* icon;   // small image asset key, "" = use the weapon icon instead
 	};
 
+	// What the scripts say the player is doing: a mission, a stranger, a minigame, a job.
+	// Empty text = nothing scripted is running.
+	ActivityChoice ChooseScriptedActivity(const GameSnapshot& s, const Config& cfg, const Strings& t)
+	{
+		if (!cfg.showMissions)
+		{
+			return { s.minigame ? t.minigame : "", s.minigame ? "minigame" : "" };
+		}
+
+		const ActiveScript& sc = s.script;
+		std::string title = Localization::TranslateActivity(cfg.language, sc.title);
+		switch (sc.kind)
+		{
+			case ScriptKind::StoryMission:
+				return { t.missionPrefix + title, "mission" };
+			case ScriptKind::StrangerMission:
+				return { t.strangerPrefix + title, "stranger" };
+			case ScriptKind::Bounty:
+				return { title, "bounty" };
+			case ScriptKind::Job:
+			case ScriptKind::GangHideout:
+				return { title, "job" };
+			case ScriptKind::Duel:
+				return { title, "duel" };
+			case ScriptKind::Minigame:
+				// The table scripts may also run while merely sitting nearby: trust the engine flag.
+				if (s.minigame)
+				{
+					std::string text = t.playingPrefix + title;
+					if (!sc.place.empty()) text += kSeparator + sc.place;
+					return { text, "minigame" };
+				}
+				break;
+			default:
+				break;
+		}
+		if (s.minigame)
+		{
+			return { t.minigame, "minigame" };
+		}
+		return { "", "" };
+	}
+
+	std::string FormatMoney(int amount)
+	{
+		// $1,234
+		std::string digits = std::to_string(amount < 0 ? -amount : amount);
+		std::string out;
+		int count = 0;
+		for (auto it = digits.rbegin(); it != digits.rend(); ++it)
+		{
+			if (count && count % 3 == 0) out.insert(out.begin(), ',');
+			out.insert(out.begin(), *it);
+			++count;
+		}
+		return (amount < 0 ? "-$" : "$") + out;
+	}
+
 	ActivityChoice ChooseActivity(const GameSnapshot& s, const Strings& t)
 	{
 		if (s.paused)   return { t.paused, "paused" };
 		if (s.cutscene) return { t.cutscene, "cutscene" };
 		if (s.dead)     return { t.dead, "dead" };
-		if (s.minigame) return { t.minigame, "minigame" };
 		if (s.hogtied)  return { t.hogtied, "lasso" };
 		if (s.handsUp)  return { t.handsUp, "" };
 		if (s.deadEye)  return { t.deadEye, "deadeye" };
@@ -175,19 +232,31 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	}
 
 	// --- Line 1: what the player is doing -------------------------------------------------
-	ActivityChoice choice = ChooseActivity(s, t);
+	// A scripted activity (mission, minigame...) owns the line; the moment-to-moment state
+	// (on horseback, in a gunfight...) then moves to the small image. Pause / cutscene / death
+	// always win.
+	ActivityChoice moment = ChooseActivity(s, t);
+	ActivityChoice scripted = ChooseScriptedActivity(s, cfg, t);
+	bool interrupted = s.paused || s.cutscene || s.dead;
+	bool useScripted = !scripted.text.empty() && !interrupted;
+
+	ActivityChoice choice = useScripted ? scripted : moment;
 	a.details = choice.text;
-	if (cfg.showHealth && !s.dead)
+	if (cfg.showHealth && !s.dead && !s.paused)
 	{
 		std::string hp = HealthText(s, t);
 		if (!hp.empty())
 		{
 			a.details += kSeparator + hp;
 		}
-		if (s.inCombat && !s.deadEye)
+		if (s.inCombat && !s.deadEye && !useScripted)
 		{
 			a.details += kSeparator + std::string(t.deadEyeShort) + " " + std::to_string(s.deadEyePoints);
 		}
+	}
+	if (cfg.showBounty && s.bounty > 0 && !interrupted)
+	{
+		a.details += kSeparator + std::string(t.wanted) + " " + FormatMoney(s.bounty);
 	}
 
 	// --- Line 2: where / when ---------------------------------------------------------------
@@ -230,9 +299,28 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	{
 		a.largeText += kSeparator + std::string(t.outfits[s.outfit]);
 	}
+	if (cfg.showMoney)
+	{
+		a.largeText += kSeparator + FormatMoney(s.money)
+			+ kSeparator + t.honorLabel + " " + std::to_string(s.honor)
+			+ kSeparator + t.fameLabel + " " + std::to_string(s.fame);
+	}
 
 	std::string weapon = WeaponText(s, t);
-	if (choice.icon[0] != '\0')
+	bool momentIsPlain = (moment.text == t.exploring || moment.text == t.indoors);
+	if (useScripted && !momentIsPlain)
+	{
+		// The scripted activity owns line 1, so the moment-to-moment state goes here:
+		// e.g. horse icon, "On horseback · Cattleman Revolver".
+		a.smallImage = moment.icon[0] != '\0' ? moment.icon
+		             : (s.weaponCategory != WEAPON_CATEGORY_INVALID ? WeaponCategorySlug(s.weaponCategory) : "");
+		a.smallText = moment.text;
+		if (cfg.showWeapon && !weapon.empty())
+		{
+			a.smallText += kSeparator + weapon;
+		}
+	}
+	else if (choice.icon[0] != '\0')
 	{
 		a.smallImage = choice.icon;
 		a.smallText = choice.text;

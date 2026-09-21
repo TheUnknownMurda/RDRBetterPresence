@@ -16,6 +16,9 @@ struct Config
 	bool showHealth = true;
 	bool showWeapon = true;
 	bool showOutfit = true;
+	bool showMoney = true;            // cash / honor / fame in the large image hover text
+	bool showBounty = true;           // "Wanted $x" on the activity line
+	bool showMissions = true;         // story / stranger missions, minigames and jobs by name
 	bool showCoordinates = false;     // debugging aid: append X/Y to the state line
 	std::string largeImageDefault = "rdr_logo";
 	bool useRegionImages = true;      // large image = region_<slug> when a region is known

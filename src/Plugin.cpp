@@ -28,6 +28,15 @@ namespace
 	std::mutex g_snapshotMutex;
 	GameSnapshot g_snapshot;
 
+	// Heartbeat of the script fiber. The game freezes its script VM while paused (pause
+	// menu, map, loading), so a stalled heartbeat is how we notice the pause.
+	std::atomic<long long> g_lastFiberTickMs = 0;
+
+	long long NowMs()
+	{
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+	}
+
 	std::atomic<bool> g_stop = false;
 	HANDLE g_workerThread = nullptr;
 	HANDLE g_workerDone = nullptr;
@@ -100,6 +109,29 @@ namespace
 		{
 			Log::Info("Game state changed: %d -> %d", prev.gameState, cur.gameState);
 		}
+
+		if (cur.playerValid && !(cur.script == prev.script))
+		{
+			Log::Info("Active script: kind=%d name='%s' title='%s' place='%s'",
+				(int)cur.script.kind, cur.script.name.c_str(), cur.script.title.c_str(), cur.script.place.c_str());
+		}
+
+		if (cur.playerValid && (cur.money != prev.money || cur.honor != prev.honor || cur.fame != prev.fame || cur.bounty != prev.bounty))
+		{
+			Log::Info("Stats: money=%d honor=%d fame=%d bounty=%d", cur.money, cur.honor, cur.fame, cur.bounty);
+		}
+
+		if (cur.playerValid && (cur.globalWordSize != prev.globalWordSize || cur.globalLastMission != prev.globalLastMission
+			|| cur.globalWanted != prev.globalWanted || cur.globalVolume != prev.globalVolume))
+		{
+			Log::Info("Globals: wordSize=%d lastMission=%d wanted=%d volume=%d (at x=%.0f z=%.0f)",
+				cur.globalWordSize, cur.globalLastMission, cur.globalWanted, cur.globalVolume, cur.posX, cur.posZ);
+		}
+
+		if (cur.paused != prev.paused)
+		{
+			Log::Info("IS_GAME_PAUSED -> %d", cur.paused);
+		}
 	}
 
 	void ScriptMain()
@@ -108,11 +140,15 @@ namespace
 		Log::Info("Script fiber started (poll every %d ms)", g_config.pollIntervalMs);
 
 		GameSnapshot previous;
+		unsigned tick = 0;
 		while (true)
 		{
 			Log::FlushToConsole();
+			g_lastFiberTickMs = NowMs();
 
-			GameSnapshot current = GameState::Sample();
+			// Script detection is the expensive part: refresh it every ~2 s.
+			bool refreshScripts = (tick++ % (unsigned)std::max(1, 2000 / g_config.pollIntervalMs)) == 0;
+			GameSnapshot current = GameState::Sample(previous, refreshScripts);
 			LogInterestingChanges(previous, current);
 
 			if (g_config.logLevel == "debug" && current.playerValid)
@@ -179,6 +215,14 @@ namespace
 			{
 				std::lock_guard<std::mutex> lock(g_snapshotMutex);
 				snapshot = g_snapshot;
+			}
+
+			// A frozen script fiber while the player exists means the game is paused.
+			long long lastTick = g_lastFiberTickMs.load();
+			bool fiberStalled = lastTick != 0 && (NowMs() - lastTick) > std::max(1500, g_config.pollIntervalMs * 3);
+			if (fiberStalled && snapshot.playerValid)
+			{
+				snapshot.paused = true;
 			}
 
 			Activity activity = PresenceBuilder::Build(snapshot, g_config, g_sessionStart);
