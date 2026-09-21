@@ -75,6 +75,8 @@ struct GameSnapshot
 	int lastObjective = 0;
 	int testMission = 0;
 	int validScripts = 0;
+	std::string validScriptIds;   // e.g. "0,1,5"
+	std::string journal;          // "list:count[entry type progress targeted details firstDetailHash ...]"
 
 	// Scripted activity (story mission, stranger, minigame...). Refreshed less often than the rest.
 	ActiveScript script;
@@ -87,4 +89,8 @@ namespace GameState
 	// Must be called from the RedHook script fiber. `previous` supplies the fields that are
 	// refreshed only every few samples (script detection).
 	GameSnapshot Sample(const GameSnapshot& previous, bool refreshScripts);
+
+	// Logs STRING_TO_HASH of every story-mission label (miss<N>, miss<N>_short) once, so
+	// journal hashes seen in the log can be matched offline. Script fiber only.
+	void LogMissionLabelHashes();
 }

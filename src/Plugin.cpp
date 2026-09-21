@@ -123,10 +123,10 @@ namespace
 		}
 
 		if (cur.playerValid && (cur.journalTarget != prev.journalTarget || cur.lastObjective != prev.lastObjective
-			|| cur.testMission != prev.testMission || cur.validScripts != prev.validScripts))
+			|| cur.testMission != prev.testMission || cur.validScriptIds != prev.validScriptIds || cur.journal != prev.journal))
 		{
-			Log::Info("Mission research: journalTarget=%d (0x%X) lastObjective=%d testMission=%d validScripts=%d",
-				cur.journalTarget, (unsigned)cur.journalTarget, cur.lastObjective, cur.testMission, cur.validScripts);
+			Log::Info("Mission research: journalTarget=0x%X lastObjective=0x%X testMission=%d scripts=[%s] journal:%s",
+				(unsigned)cur.journalTarget, (unsigned)cur.lastObjective, cur.testMission, cur.validScriptIds.c_str(), cur.journal.c_str());
 		}
 
 		if (cur.paused != prev.paused)
@@ -139,6 +139,7 @@ namespace
 	{
 		Log::MarkScriptThread();
 		Log::Info("Script fiber started (poll every %d ms)", g_config.pollIntervalMs);
+		GameState::LogMissionLabelHashes();
 
 		GameSnapshot previous;
 		unsigned tick = 0;
