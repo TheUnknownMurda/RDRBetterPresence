@@ -123,6 +123,7 @@ namespace
 		bool duel;
 		int unknownCount;
 		unsigned unknown[8];
+		char listing[2048]; // every list-0 entry as "0xHASH:type/details[*]", for the research log
 	};
 
 	void InitRaw()
@@ -153,7 +154,17 @@ namespace
 		for (int i = 0; i < count; ++i)
 		{
 			int entry = JOURNAL::GET_JOURNAL_ENTRY_IN_LIST(0, i);
-			if (JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry) != kMissionEntryType)
+			int type = JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry);
+
+			size_t len = strlen(out.listing);
+			if (len + 32 < sizeof(out.listing))
+			{
+				snprintf(out.listing + len, sizeof(out.listing) - len, "%s0x%08X:%d/%d%s", len ? " " : "",
+					(unsigned)entry, type, JOURNAL::GET_JOURNAL_ENTRY_NUM_DETAILS(entry),
+					JOURNAL::IS_JOURNAL_ENTRY_TARGETED(entry) ? "*" : "");
+			}
+
+			if (type != kMissionEntryType)
 			{
 				continue;
 			}
@@ -218,6 +229,14 @@ ActiveMission Journal::Detect()
 		}
 		g_ready = false;
 		return result;
+	}
+
+	// Research: the whole list, in the file only, whenever it changes.
+	static std::string s_lastListing;
+	if (s_lastListing != scan.listing)
+	{
+		s_lastListing = scan.listing;
+		Log::FileOnly("Journal list 0: %s", scan.listing);
 	}
 
 	// Unknown in-progress entries are worth a line in the log file (once per value).
