@@ -51,10 +51,22 @@ namespace
 		return buf;
 	}
 
+	// RedHook's Print formats into a fixed buffer with a checked CRT function that aborts the
+	// whole game on overflow (seen in a crash dump with a ~1 KB message), so console lines are
+	// cut well below that. The log file always gets the full text.
+	constexpr size_t kMaxConsoleChars = 600;
+
 	// Must be called with g_mutex held, from the script thread.
 	void PrintToConsoleLocked(LogLevel level, const std::string& text)
 	{
-		Print(ToRedHookType(level), "[BetterPresence] %s", text.c_str());
+		if (text.size() <= kMaxConsoleChars)
+		{
+			Print(ToRedHookType(level), "[BetterPresence] %s", text.c_str());
+		}
+		else
+		{
+			Print(ToRedHookType(level), "[BetterPresence] %s... (see log file)", text.substr(0, kMaxConsoleChars).c_str());
+		}
 	}
 }
 
