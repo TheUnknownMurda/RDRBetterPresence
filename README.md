@@ -72,18 +72,23 @@ Supprimez `RDRBetterPresence.red` (et ses `.ini`) du dossier du jeu. Pour retire
 
 ## Images (Discord Developer Portal)
 
-Dans votre application Discord → *Rich Presence* → *Art Assets*, ajoutez des images avec ces clés
-(toutes optionnelles, Discord ignore les clés absentes) :
+Les images sont hébergées par Discord dans **votre** application : *Developer Portal → votre app → Rich Presence →
+Art Assets → Add Image(s)*. Le nom de l'asset doit être exactement la clé (= le nom du fichier sans `.png`).
+Sans images, Discord affiche un « ? » à la place.
 
-- `rdr_logo` — image par défaut (`LargeImageDefault` dans le `.ini`, accepte aussi une URL https).
-- `region_<slug>` — une par région : `region_cholla_springs`, `region_rio_bravo`, `region_gaptooth_ridge`,
-  `region_hennigan_s_stead`, `region_punta_orgullo`, `region_perdido`, `region_diez_coronas`,
-  `region_tall_trees`, `region_great_plains`.
-- Activités : `mission`, `duel`, `paused`, `cutscene`, `dead`, `minigame`, `lasso`, `deadeye`, `train`,
-  `stagecoach`, `horse`.
-- Armes : `weapon_pistol`, `weapon_revolver`, `weapon_repeater`, `weapon_rifle`, `weapon_shotgun`,
-  `weapon_sniper`, `weapon_lasso`, `weapon_melee`, `weapon_explosive`, `weapon_thrown`, `weapon_turret`,
-  `weapon_cannon`, `weapon_bow`.
+**Petites images (état / arme) — fournies** : les 24 icônes de [`assets/small/`](assets/small) (512 × 512, disque
+sombre + anneau rouge, lisibles à 30 px) sont aussi téléchargeables en zip dans les [Releases](../../releases/latest).
+Uploadez-les telles quelles.
+
+![Aperçu des petites images](assets/preview_small.png)
+
+Elles sont générées par [`assets/make_icons.py`](assets/make_icons.py) (SVG → PNG via resvg) — modifiez les
+couleurs ou les formes et relancez le script.
+
+**Grandes images — à fournir** : `rdr_logo` (image par défaut, ou une URL `https://` dans `LargeImageDefault`) et,
+si `UseRegionImages=true`, une par région : `region_cholla_springs`, `region_rio_bravo`, `region_gaptooth_ridge`,
+`region_hennigan_s_stead`, `region_punta_orgullo`, `region_perdido`, `region_diez_coronas`, `region_tall_trees`,
+`region_great_plains`.
 
 ## Configuration
 
