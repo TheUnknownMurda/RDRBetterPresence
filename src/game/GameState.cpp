@@ -173,7 +173,9 @@ namespace
 		r.cutscene = CAMERA::IS_CUTSCENE_TUNER_PLAYINGBACK() != 0 || CORE::IS_D11_CUTSCENE_HACK();
 		r.inCombat = ACTOR::IS_PLAYER_IN_COMBAT(player) != 0;
 		r.deadEye = ACTOR::IS_PLAYER_DEADEYE(player);
-		r.deadEyePoints = ACTOR::GET_PLAYER_DEADEYE_POINTS(player);
+		// The SDK declares this native as int, but the game returns a float (observed in-game:
+		// 0x427A9981 = 62.65). Invoke it with the right return type and round.
+		r.deadEyePoints = (int)(Invoke<0x86B5C9E1, float>(player) + 0.5f);
 		r.usingCover = ACTOR::IS_PLAYER_USING_COVER(player) != 0;
 		r.handsUp = ACTOR::IS_ACTOR_HANDSUP(player) != 0;
 		r.inRoom = ACTOR::IS_ACTOR_IN_ROOM(player) != 0;
