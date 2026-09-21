@@ -74,8 +74,12 @@ namespace
 		if (!s_probed)
 		{
 			s_probed = true;
-			if (ReadGlobal(base, 8, kGlobalPlayerActor) == player) s_wordSize = 8;
-			else if (ReadGlobal(base, 4, kGlobalPlayerActor) == player) s_wordSize = 4;
+			int at8 = ReadGlobal(base, 8, kGlobalPlayerActor);
+			int at4 = ReadGlobal(base, 4, kGlobalPlayerActor);
+			if (at8 == player) s_wordSize = 8;
+			else if (at4 == player) s_wordSize = 4;
+			Log::Info("Globals probe: base=0x%llX player=%d PlayerActor@8=%d PlayerActor@4=%d -> wordSize=%d",
+				(unsigned long long)base, player, at8, at4, s_wordSize);
 		}
 
 		r.globalWordSize = s_wordSize;
@@ -203,11 +207,11 @@ namespace
 			CopyStr(r.weaponName, sizeof(r.weaponName), WEAPON::GET_WEAPON_DISPLAY_NAME((WeaponModel)r.weapon));
 		}
 
-		// Stats
-		r.money = STAT::GET_SAGPLAYER_STAT_INT(kStatMoney);
-		r.honor = STAT::GET_SAGPLAYER_STAT_INT(kStatHonor);
-		r.fame = STAT::GET_SAGPLAYER_STAT_INT(kStatFame);
-		r.bounty = STAT::GET_SAGPLAYER_STAT_INT(kStatBounty);
+		// Stats are stored as floats (observed in-game: the int native returned 0x42960000 = 75.0 for a $75 bounty).
+		r.money = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatMoney) + 0.5f);
+		r.honor = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatHonor) + 0.5f);
+		r.fame = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatFame) + 0.5f);
+		r.bounty = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatBounty) + 0.5f);
 
 		// Research: raw script globals
 		r.globalLastMission = r.globalWanted = r.globalVolume = -1;
