@@ -29,7 +29,7 @@ namespace
 		int bounty;
 		int journalTarget, lastObjective, testMission, validScripts;
 		char validScriptIds[128];
-		char journal[1024];
+		char journal[4096];
 	};
 
 	// "Active bounty total" stat id (Foxxyyy, RDR_Stats.c); verified in-game.
@@ -173,7 +173,7 @@ namespace
 			if (count <= 0 || count > 64) continue;
 			size_t len = strlen(r.journal);
 			snprintf(r.journal + len, sizeof(r.journal) - len, " L%d:%d[", list, count);
-			for (int i = 0; i < count && i < 12; ++i)
+			for (int i = 0; i < count && i < 48; ++i)
 			{
 				int entry = JOURNAL::GET_JOURNAL_ENTRY_IN_LIST(list, i);
 				int type = JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry);
@@ -321,6 +321,7 @@ void GameState::LogMissionLabelHashes()
 	__try
 	{
 		LogMissionLabelHashesRaw();
+		Scripts::LogNameHashes();
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{

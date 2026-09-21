@@ -155,7 +155,7 @@ void Log::Write(LogLevel level, const char* format, ...)
 
 void Log::FileOnly(const char* format, ...)
 {
-	char buffer[4096];
+	static char buffer[8192];   // research lines can be long; static keeps the fiber stack small
 	va_list args;
 	va_start(args, format);
 	vsnprintf(buffer, sizeof(buffer), format, args);

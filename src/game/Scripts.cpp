@@ -346,3 +346,15 @@ ActiveScript Scripts::Describe(int index)
 	}
 	return a;
 }
+
+void Scripts::LogNameHashes()
+{
+	for (const KnownScript& s : kScripts)
+	{
+		char upper[64];
+		strncpy_s(upper, s.name, _TRUNCATE);
+		for (char* c = upper; *c; ++c) *c = (char)toupper((unsigned char)*c);
+		Log::FileOnly("hash(%s)=0x%08X hash(%s)=0x%08X hash(%s)=0x%08X",
+			s.name, STRING::STRING_TO_HASH(s.name), upper, STRING::STRING_TO_HASH(upper), s.path, STRING::STRING_TO_HASH(s.path));
+	}
+}

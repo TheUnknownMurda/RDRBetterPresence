@@ -39,4 +39,8 @@ namespace Scripts
 
 	// Describes an index returned by DetectIndex (-1 -> kind None).
 	ActiveScript Describe(int index);
+
+	// Research: logs (file only) STRING_TO_HASH of every known script name, its uppercase
+	// form and its path, so journal handles seen in the log can be matched offline.
+	void LogNameHashes();
 }
