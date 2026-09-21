@@ -41,7 +41,8 @@ Ce que Discord affiche, mis à jour en temps réel depuis le jeu :
 4. Lancer Discord, puis le jeu.
 
 Le plugin écrit `RDRBetterPresence.log` à la racine du jeu et parle aussi dans la console RedHook (F8).
-Commandes utiles dans la console : `reload "RDRBetterPresence"` (relit le `.ini`), `unload "RDRBetterPresence"`.
+Commandes utiles dans la console (sans guillemets) : `reload RDRBetterPresence` (relit le `.ini`),
+`unload RDRBetterPresence`, `load RDRBetterPresence`.
 
 ## Images (Discord Developer Portal)
 
@@ -49,10 +50,9 @@ Dans votre application Discord → *Rich Presence* → *Art Assets*, ajoutez des
 (toutes optionnelles, Discord ignore les clés absentes) :
 
 - `rdr_logo` — image par défaut (`LargeImageDefault` dans le `.ini`, accepte aussi une URL https).
-- `region_<slug>` — une par région/lieu : `region_cholla_springs`, `region_rio_bravo`, `region_gaptooth_ridge`,
-  `region_hennigan_s_stead`, `region_diez_coronas`, `region_punta_orgullosa`, `region_perdido`,
-  `region_tall_trees`, `region_great_plains`… Le slug est le nom retourné par le jeu en minuscules ASCII,
-  `_` entre les mots (voir le log : `District changed: ... -> 'Nom'`).
+- `region_<slug>` — une par région : `region_cholla_springs`, `region_rio_bravo`, `region_gaptooth_ridge`,
+  `region_hennigan_s_stead`, `region_punta_orgullo`, `region_perdido`, `region_diez_coronas`,
+  `region_tall_trees`, `region_great_plains`.
 - Activités : `mission`, `stranger`, `duel`, `paused`, `cutscene`, `dead`, `minigame`, `lasso`, `deadeye`, `train`,
   `stagecoach`, `horse`.
 - Armes : `weapon_pistol`, `weapon_revolver`, `weapon_repeater`, `weapon_rifle`, `weapon_shotgun`,
@@ -62,8 +62,8 @@ Dans votre application Discord → *Rich Presence* → *Art Assets*, ajoutez des
 ## Configuration
 
 `RDRBetterPresence.ini` (lu au chargement du plugin) : langue (`fr`/`en`), éléments affichés, intervalle de
-mise à jour, boutons, niveau de log. `RDRBetterPresence.regions.ini` : rectangles de coordonnées pour nommer
-villes et lieux précisément (prioritaires sur le district du jeu) — activez `ShowCoordinates=true` pour
+mise à jour, boutons, niveau de log. `RDRBetterPresence.regions.ini` : rectangles de coordonnées (x, z) pour
+nommer des lieux supplémentaires (prioritaires sur la table intégrée) — activez `ShowCoordinates=true` pour
 relever les coordonnées.
 
 ## Compilation (développeur)
