@@ -122,6 +122,13 @@ namespace
 			Log::Info("Bounty: $%d", cur.bounty);
 		}
 
+		if (cur.playerValid && (cur.journalTarget != prev.journalTarget || cur.lastObjective != prev.lastObjective
+			|| cur.testMission != prev.testMission || cur.validScripts != prev.validScripts))
+		{
+			Log::Info("Mission research: journalTarget=%d (0x%X) lastObjective=%d testMission=%d validScripts=%d",
+				cur.journalTarget, (unsigned)cur.journalTarget, cur.lastObjective, cur.testMission, cur.validScripts);
+		}
+
 		if (cur.paused != prev.paused)
 		{
 			Log::Info("IS_GAME_PAUSED -> %d", cur.paused);

@@ -70,6 +70,12 @@ struct GameSnapshot
 	// Active bounty (SAG player stat 222, stored as a float by the game)
 	int bounty = 0;
 
+	// Mission research: raw values logged on change until a reliable "current mission" source is known.
+	int journalTarget = 0;
+	int lastObjective = 0;
+	int testMission = 0;
+	int validScripts = 0;
+
 	// Scripted activity (story mission, stranger, minigame...). Refreshed less often than the rest.
 	ActiveScript script;
 

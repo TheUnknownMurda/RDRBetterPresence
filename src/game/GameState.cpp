@@ -27,6 +27,7 @@ namespace
 		int gameState;
 		char playerName[64];
 		int bounty;
+		int journalTarget, lastObjective, testMission, validScripts;
 	};
 
 	// "Active bounty total" stat id (Foxxyyy, RDR_Stats.c); verified in-game.
@@ -145,6 +146,16 @@ namespace
 
 		// Stats are stored as floats (observed in-game: the int native returned 0x42960000 = 75.0 for a $75 bounty).
 		r.bounty = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatBounty) + 0.5f);
+
+		// Mission research
+		r.journalTarget = JOURNAL::GET_TARGETED_JOURNAL_ENTRY();
+		r.lastObjective = JOURNAL::GET_LAST_NOTE_OBJECTIVE();
+		r.testMission = CORE::SCRIPT_GETTESTMISSION();
+		r.validScripts = 0;
+		for (int id = 0; id < 128; ++id)
+		{
+			if (CORE::IS_SCRIPT_VALID(id)) ++r.validScripts;
+		}
 	}
 
 	// Returns false if a native blew up (access violation etc.) - the game keeps running
@@ -231,6 +242,10 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 	s.outfit = r.outfit;
 	s.playerName = r.playerName;
 	s.bounty = r.bounty;
+	s.journalTarget = r.journalTarget;
+	s.lastObjective = r.lastObjective;
+	s.testMission = r.testMission;
+	s.validScripts = r.validScripts;
 
 	// Script detection is ~200 native calls, so it is refreshed every few samples only.
 	static bool s_scriptsDisabled = false;

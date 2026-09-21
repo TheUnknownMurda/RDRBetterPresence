@@ -207,9 +207,11 @@ namespace
 	#undef RCM
 	#undef MINI
 
-	// Which spelling the native accepts is discovered at runtime (see Detect).
-	enum class NameForm { Unknown, Short, Path };
-	NameForm g_nameForm = NameForm::Unknown;
+	// Which native / spelling reports a running script is discovered at runtime (see IsRunning):
+	// _IS_ANY_NAMED_SCRIPT_RUNNING seems to only know the caller's child scripts, and mission
+	// scripts are streamed in on demand, so DOES_SCRIPT_EXIST is tried as well.
+	enum class Probe { Unknown, RunningShort, RunningPath, ExistsPath, ExistsShort, Disabled };
+	Probe g_probe = Probe::Unknown;
 
 	int Priority(ScriptKind kind)
 	{
@@ -244,29 +246,67 @@ namespace
 		return sorted;
 	}
 
+	bool Check(Probe probe, const KnownScript& s)
+	{
+		switch (probe)
+		{
+			case Probe::RunningShort: return CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.name);
+			case Probe::RunningPath:  return CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.path);
+			case Probe::ExistsPath:   return CORE::DOES_SCRIPT_EXIST(s.path);
+			case Probe::ExistsShort:  return CORE::DOES_SCRIPT_EXIST(s.name);
+			default:                  return false;
+		}
+	}
+
+	const char* ProbeName(Probe probe)
+	{
+		switch (probe)
+		{
+			case Probe::RunningShort: return "_IS_ANY_NAMED_SCRIPT_RUNNING(short name)";
+			case Probe::RunningPath:  return "_IS_ANY_NAMED_SCRIPT_RUNNING(path)";
+			case Probe::ExistsPath:   return "DOES_SCRIPT_EXIST(path)";
+			case Probe::ExistsShort:  return "DOES_SCRIPT_EXIST(short name)";
+			default:                  return "?";
+		}
+	}
+
 	bool IsRunning(const KnownScript& s)
 	{
-		switch (g_nameForm)
+		if (g_probe == Probe::Disabled)
 		{
-			case NameForm::Short:
-				return CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.name);
-			case NameForm::Path:
-				return CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.path);
-			default:
-				if (CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.name))
-				{
-					g_nameForm = NameForm::Short;
-					Log::Info("Script lookup works with short names (matched '%s')", s.name);
-					return true;
-				}
-				if (CORE::_IS_ANY_NAMED_SCRIPT_RUNNING(s.path))
-				{
-					g_nameForm = NameForm::Path;
-					Log::Info("Script lookup works with full paths (matched '%s')", s.path);
-					return true;
-				}
-				return false;
+			return false;
 		}
+		if (g_probe != Probe::Unknown)
+		{
+			return Check(g_probe, s);
+		}
+		for (Probe candidate : { Probe::RunningShort, Probe::RunningPath, Probe::ExistsPath, Probe::ExistsShort })
+		{
+			if (Check(candidate, s))
+			{
+				g_probe = candidate;
+				Log::Info("Script detection works with %s (matched '%s')", ProbeName(candidate), s.name);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// A probe that says every script is present is useless: count matches over the whole
+	// table right after it is chosen and give up if there are too many.
+	void ValidateProbe()
+	{
+		int matches = 0;
+		for (const KnownScript& s : kScripts)
+		{
+			if (Check(g_probe, s) && ++matches > 3)
+			{
+				Log::Warning("%s reports more than 3 known scripts at once - mission detection disabled", ProbeName(g_probe));
+				g_probe = Probe::Disabled;
+				return;
+			}
+		}
+		Log::Info("%s reports %d known script(s) right now", ProbeName(g_probe), matches);
 	}
 }
 
@@ -275,8 +315,17 @@ int Scripts::DetectIndex()
 	const auto& sorted = SortedScripts();
 	for (size_t i = 0; i < sorted.size(); ++i)
 	{
+		Probe before = g_probe;
 		if (IsRunning(*sorted[i]))
 		{
+			if (before == Probe::Unknown)
+			{
+				ValidateProbe();
+				if (g_probe == Probe::Disabled)
+				{
+					return -1;
+				}
+			}
 			return (int)i;
 		}
 	}
