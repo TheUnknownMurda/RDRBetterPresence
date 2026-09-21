@@ -52,9 +52,9 @@ namespace
 	}
 
 	// RedHook's Print formats into a fixed buffer with a checked CRT function that aborts the
-	// whole game on overflow (seen in a crash dump with a ~1 KB message), so console lines are
+	// whole game on overflow (crash dumps: a 640-char message was already too long), so console lines are
 	// cut well below that. The log file always gets the full text.
-	constexpr size_t kMaxConsoleChars = 600;
+	constexpr size_t kMaxConsoleChars = 380;
 
 	// Must be called with g_mutex held, from the script thread.
 	void PrintToConsoleLocked(LogLevel level, const std::string& text)
