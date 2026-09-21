@@ -84,7 +84,4 @@ namespace GameState
 	// Must be called from the RedHook script fiber. `previous` supplies the fields that are
 	// refreshed only every few samples (script detection).
 	GameSnapshot Sample(const GameSnapshot& previous, bool refreshScripts);
-
-	// Research aid (F9 in game): writes every SAG player stat as int and float to `path`.
-	bool DumpStats(const std::string& path);
 }

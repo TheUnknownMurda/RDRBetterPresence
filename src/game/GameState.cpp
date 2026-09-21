@@ -168,35 +168,6 @@ namespace
 		}
 	}
 
-	// Writes every SAG player stat (as int and as float) to a file, to identify stat ids.
-	// Foxxyyy counted 696 stats in the scripts.
-	constexpr int kStatCount = 700;
-
-	int DumpStatsRaw(FILE* f)
-	{
-		int written = 0;
-		for (int id = 0; id < kStatCount; ++id)
-		{
-			int i = STAT::GET_SAGPLAYER_STAT_INT(id);
-			float fl = STAT::GET_SAGPLAYER_STAT_FLOAT(id);
-			fprintf(f, "%d\t%d\t%g\n", id, i, fl);
-			++written;
-		}
-		return written;
-	}
-
-	int DumpStatsGuarded(FILE* f)
-	{
-		__try
-		{
-			return DumpStatsRaw(f);
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
-			return -1;
-		}
-	}
-
 	int DetectScriptGuarded()
 	{
 		__try
@@ -290,22 +261,3 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 	return s;
 }
 
-bool GameState::DumpStats(const std::string& path)
-{
-	FILE* f = nullptr;
-	if (fopen_s(&f, path.c_str(), "w") != 0 || !f)
-	{
-		Log::Error("Cannot write %s", path.c_str());
-		return false;
-	}
-	fprintf(f, "id\tint\tfloat\n");
-	int n = DumpStatsGuarded(f);
-	fclose(f);
-	if (n < 0)
-	{
-		Log::Error("Exception while dumping stats (partial file written)");
-		return false;
-	}
-	Log::Info("Dumped %d stats to %s", n, path.c_str());
-	return true;
-}

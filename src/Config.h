@@ -32,6 +32,7 @@ struct Config
 	bool logToConsole = true;
 	std::string logLevel = "info";    // debug | info | warning | error
 	int pollIntervalMs = 500;         // how often the script fiber samples the game state
+	int researchNeedle = 0;           // value searched by the F9 research dump (e.g. current cash)
 
 	static Config Load(const std::string& iniPath);
 	static void WriteDefault(const std::string& iniPath, const std::string& clientId);

@@ -59,6 +59,7 @@ Config Config::Load(const std::string& ini)
 	c.logToConsole      = ReadBool(ini, "Debug", "LogToConsole", c.logToConsole);
 	c.logLevel          = ReadString(ini, "Debug", "LogLevel", c.logLevel);
 	c.pollIntervalMs    = ReadInt(ini, "Debug", "PollIntervalMs", c.pollIntervalMs);
+	c.researchNeedle    = ReadInt(ini, "Debug", "ResearchNeedle", c.researchNeedle);
 
 	// Clamp to sane values: Discord rate-limits SET_ACTIVITY to ~5 updates / 20 s.
 	if (c.updateIntervalMs < 4000) c.updateIntervalMs = 4000;

@@ -5,6 +5,7 @@
 #include "discord/DiscordIPC.h"
 #include "game/GameState.h"
 #include "game/Regions.h"
+#include "game/Research.h"
 #include "presence/PresenceBuilder.h"
 
 #include <ctime>
@@ -21,7 +22,6 @@ namespace
 	constexpr const char* kIniName = "RDRBetterPresence.ini";
 	constexpr const char* kRegionsIniName = "RDRBetterPresence.regions.ini";
 	constexpr const char* kLogName = "RDRBetterPresence.log";
-	constexpr const char* kStatsDumpName = "RDRBetterPresence.stats.txt";
 
 	std::string g_directory;
 
@@ -151,7 +151,7 @@ namespace
 			// lost between two 500 ms polls (RedHook's IS_KEY_PRESSED is per-frame).
 			if (current.playerValid && (GetAsyncKeyState(VK_F9) & 1))
 			{
-				GameState::DumpStats(g_directory + kStatsDumpName);
+				Research::Dump(g_directory, g_config.researchNeedle);
 			}
 
 			if (g_config.logLevel == "debug" && current.playerValid)
