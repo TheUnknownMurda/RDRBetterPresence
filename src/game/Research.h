@@ -8,7 +8,7 @@ namespace Research
 {
 	// Must be called from the RedHook script fiber.
 	// - <dir>RDRBetterPresence.stats.txt   : every SAG player stat as int and float
-	// - <dir>RDRBetterPresence.globals.txt : layout probe of RedHook's GetGlobalPtr() block and
-	//                                        the 4-byte slots holding `needle` (e.g. the money shown in the pause menu)
+	// - <dir>RDRBetterPresence.scan.txt    : every 4-byte slot of the process holding `needle` (background thread);
+	//                                        take two scans with different known values and intersect the addresses
 	void Dump(const std::string& dir, int needle);
 }

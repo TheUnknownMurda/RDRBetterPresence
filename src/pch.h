@@ -15,6 +15,7 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <sstream>
