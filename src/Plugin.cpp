@@ -151,7 +151,9 @@ namespace
 			// lost between two 500 ms polls (RedHook's IS_KEY_PRESSED is per-frame).
 			if (current.playerValid && (GetAsyncKeyState(VK_F9) & 1))
 			{
-				Research::Dump(g_directory, g_config.researchNeedle);
+				// Re-read the needle each time so research iterations do not need a plugin reload.
+				int needle = GetPrivateProfileIntA("Debug", "ResearchNeedle", g_config.researchNeedle, (g_directory + kIniName).c_str());
+				Research::Dump(g_directory, needle);
 			}
 
 			if (g_config.logLevel == "debug" && current.playerValid)

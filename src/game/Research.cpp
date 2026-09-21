@@ -70,6 +70,14 @@ namespace
 			return;
 		}
 
+		MEMORY_BASIC_INFORMATION mbi{};
+		if (VirtualQuery((const void*)base, &mbi, sizeof(mbi)))
+		{
+			fprintf(f, "Region: base 0x%llX size 0x%llX protect 0x%X (base is +0x%llX into it)\n\n",
+				(unsigned long long)mbi.BaseAddress, (unsigned long long)mbi.RegionSize, mbi.Protect,
+				(unsigned long long)(base - (uintptr_t)mbi.BaseAddress));
+		}
+
 		fprintf(f, "First 16 qwords at base:\n");
 		for (int i = 0; i < 16; ++i)
 		{
