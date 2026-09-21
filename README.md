@@ -7,14 +7,30 @@ Ce que Discord affiche, mis à jour en temps réel depuis le jeu :
 
 | Ligne | Contenu | Source (natives RedHook) |
 |---|---|---|
-| Activité | Exploration libre, En fusillade, Dead Eye activé, À cheval / mule / taureau / bison, À bord du train, Conduit une diligence, Capture au lasso, Mini-jeu, Cinématique, En pause, Mort, Ivre, À l'intérieur… + PV en % | `IS_PLAYER_IN_COMBAT`, `IS_PLAYER_DEADEYE`, `IS_ACTOR_RIDING`, `IS_ACTOR_ON_TRAIN`, `IS_MINIGAME_RUNNING`, `IS_GAME_PAUSED`, `GET_ACTOR_HEALTH`… |
-| Lieu | Région · heure du jeu · météo | `GET_DISTRICTS_NAME`, `GET_TIME_OF_DAY`, `GET_WEATHER` |
+| Activité | **Mission en cours (titre)**, mission d'inconnu, duel, mini-jeu (+ lieu) ; sinon Exploration libre, En fusillade, Dead Eye, À cheval / mule / taureau / bison, Train, Diligence, Lasso, Cinématique, **En pause**, Mort, Ivre, À l'intérieur… + PV % + prime « Wanted $x » | Journal du jeu (`GET_JOURNAL_ENTRY_IN_LIST`, voir plus bas), `IS_PLAYER_IN_COMBAT`, `IS_PLAYER_DEADEYE`, `IS_ACTOR_RIDING`, `IS_ACTOR_ON_TRAIN`, `IS_MINIGAME_RUNNING`, `GET_ACTOR_HEALTH`, stat 222 (prime)… |
+| Lieu | Région · lieu le plus proche · heure du jeu · météo | Table de 29 repères (x, z) → région, `GET_TIME_OF_DAY`, `GET_WEATHER` |
 | Grande image | Carte de la région (`region_<slug>`), survol : personnage (John / Jack) + tenue | `GET_ACTOR_ENUM`, `GET_CURRENT_ACTOR_ENUM_VARIATION` |
 | Petite image | Icône d'activité ou catégorie d'arme, survol : nom de l'arme | `GET_WEAPON_IN_HAND`, `GET_WEAPON_DISPLAY_NAME` |
 | Timer | Temps de jeu de la session | — |
 
 > **Pourquoi pas UE4SS ?** Le port PC tourne sur le moteur **RAGE** de Rockstar (archives `.rpf`),
 > pas sur Unreal Engine. UE4SS ne peut pas fonctionner. RedHook est le ScriptHook adapté.
+
+### Ce que l'on a appris sur le jeu (vérifié en jeu, build 1.0.42)
+
+- Le monde est **Y-up** : X croît vers l'est, Z vers le sud, Y est l'altitude. `GET_DISTRICTS_NAME` renvoie toujours
+  `swall` (un seul district en solo) — les régions viennent d'une table de repères avec leurs coordonnées.
+- **Mission en cours** : au démarrage d'une mission, le jeu ajoute à la **liste 0 du journal** une entrée de type 1
+  dont le handle vaut `STRING_TO_HASH("miss<N>_short")` ; `<N>` est l'identifiant d'interface de la mission
+  (`miss12` = « Exhuming and Other Fine Hobbies »). Elle disparaît à la fin. Les missions disponibles sont en
+  liste 1 sous `hash("miss<N>")`. `_IS_ANY_NAMED_SCRIPT_RUNNING` ne voit que les scripts enfants de l'appelant
+  et `DOES_SCRIPT_EXIST` teste l'existence du fichier : inutilisables.
+- **Pause** : la VM de scripts est gelée pendant la pause, donc la fibre RedHook ne tourne plus ; le plugin
+  détecte la pause quand son battement de cœur s'arrête (`IS_GAME_PAUSED` ne bouge pas).
+- Les natives déclarées `int` par le SDK renvoient parfois des **floats** (`GET_PLAYER_DEADEYE_POINTS`, les stats
+  SAG). La prime est le stat 222 ; l'argent n'a pas été trouvé (stat 0 ≠ argent).
+- `Print` de RedHook **plante le jeu** sur certains messages longs ou riches en crochets : les lignes verbeuses
+  vont uniquement dans le fichier log.
 
 ## Installation (joueur)
 
@@ -37,7 +53,8 @@ Dans votre application Discord → *Rich Presence* → *Art Assets*, ajoutez des
   `region_hennigan_s_stead`, `region_diez_coronas`, `region_punta_orgullosa`, `region_perdido`,
   `region_tall_trees`, `region_great_plains`… Le slug est le nom retourné par le jeu en minuscules ASCII,
   `_` entre les mots (voir le log : `District changed: ... -> 'Nom'`).
-- Activités : `paused`, `cutscene`, `dead`, `minigame`, `lasso`, `deadeye`, `train`, `stagecoach`, `horse`.
+- Activités : `mission`, `stranger`, `duel`, `paused`, `cutscene`, `dead`, `minigame`, `lasso`, `deadeye`, `train`,
+  `stagecoach`, `horse`.
 - Armes : `weapon_pistol`, `weapon_revolver`, `weapon_repeater`, `weapon_rifle`, `weapon_shotgun`,
   `weapon_sniper`, `weapon_lasso`, `weapon_melee`, `weapon_explosive`, `weapon_thrown`, `weapon_turret`,
   `weapon_cannon`, `weapon_bow`.
@@ -71,7 +88,8 @@ src/
 ├── discord/DiscordIPC.*    protocole RPC Discord sur named pipe (handshake, SET_ACTIVITY, PING/PONG)
 ├── discord/Json.h          mini-sérialiseur JSON
 ├── game/GameState.*        échantillonnage de l'état du jeu via les natives (fibre de script uniquement)
-├── game/Regions.*          district du jeu + rectangles utilisateur → nom + slug d'asset
+├── game/Regions.*          repères (x, z) + rectangles utilisateur → région, lieu, slug d'asset
+├── game/Journal.*          mission en cours via le journal du jeu (hash des libellés miss<N>_short)
 └── presence/PresenceBuilder.*, Localization.h   GameSnapshot → Activity (FR / EN)
 sdk/                        RedHook SDK vendored (MIT, © K3rhos)
 ```
