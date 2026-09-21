@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	printf("[builder] riding EN : details='%s' state='%s'\n", aRideEn.details.c_str(), aRideEn.state.c_str());
 
 	GameSnapshot mission = BaseSnapshot();
-	mission.riding = true; mission.mount = MountKind::Horse; mission.bounty = 250; mission.money = 1234; mission.honor = 40; mission.fame = 12;
+	mission.riding = true; mission.mount = MountKind::Horse; mission.bounty = 250;
 	mission.script = Scripts::Describe(0);   // highest-priority entry of the table = a story mission
 	Activity aMission = PresenceBuilder::Build(mission, cfg, 0);
 	printf("[builder] mission   : details='%s' large_text='%s' small='%s'/'%s'\n",

@@ -16,7 +16,6 @@ struct Config
 	bool showHealth = true;
 	bool showWeapon = true;
 	bool showOutfit = true;
-	bool showMoney = true;            // cash / honor / fame in the large image hover text
 	bool showBounty = true;           // "Wanted $x" on the activity line
 	bool showMissions = true;         // story / stranger missions, minigames and jobs by name
 	bool showCoordinates = false;     // debugging aid: append X/Y to the state line
@@ -32,7 +31,6 @@ struct Config
 	bool logToConsole = true;
 	std::string logLevel = "info";    // debug | info | warning | error
 	int pollIntervalMs = 500;         // how often the script fiber samples the game state
-	int researchNeedle = 0;           // value searched by the F9 research dump (e.g. current cash)
 
 	static Config Load(const std::string& iniPath);
 	static void WriteDefault(const std::string& iniPath, const std::string& clientId);

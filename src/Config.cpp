@@ -43,7 +43,6 @@ Config Config::Load(const std::string& ini)
 	c.showHealth        = ReadBool(ini, "Presence", "ShowHealth", c.showHealth);
 	c.showWeapon        = ReadBool(ini, "Presence", "ShowWeapon", c.showWeapon);
 	c.showOutfit        = ReadBool(ini, "Presence", "ShowOutfit", c.showOutfit);
-	c.showMoney         = ReadBool(ini, "Presence", "ShowMoney", c.showMoney);
 	c.showBounty        = ReadBool(ini, "Presence", "ShowBounty", c.showBounty);
 	c.showMissions      = ReadBool(ini, "Presence", "ShowMissions", c.showMissions);
 	c.showCoordinates   = ReadBool(ini, "Presence", "ShowCoordinates", c.showCoordinates);
@@ -59,7 +58,6 @@ Config Config::Load(const std::string& ini)
 	c.logToConsole      = ReadBool(ini, "Debug", "LogToConsole", c.logToConsole);
 	c.logLevel          = ReadString(ini, "Debug", "LogLevel", c.logLevel);
 	c.pollIntervalMs    = ReadInt(ini, "Debug", "PollIntervalMs", c.pollIntervalMs);
-	c.researchNeedle    = ReadInt(ini, "Debug", "ResearchNeedle", c.researchNeedle);
 
 	// Clamp to sane values: Discord rate-limits SET_ACTIVITY to ~5 updates / 20 s.
 	if (c.updateIntervalMs < 4000) c.updateIntervalMs = 4000;

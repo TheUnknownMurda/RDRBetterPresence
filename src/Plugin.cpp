@@ -5,7 +5,6 @@
 #include "discord/DiscordIPC.h"
 #include "game/GameState.h"
 #include "game/Regions.h"
-#include "game/Research.h"
 #include "presence/PresenceBuilder.h"
 
 #include <ctime>
@@ -23,7 +22,6 @@ namespace
 	constexpr const char* kRegionsIniName = "RDRBetterPresence.regions.ini";
 	constexpr const char* kLogName = "RDRBetterPresence.log";
 
-	std::string g_directory;
 
 	Config g_config;
 	long long g_sessionStart = 0;
@@ -119,9 +117,9 @@ namespace
 				(int)cur.script.kind, cur.script.name.c_str(), cur.script.title.c_str(), cur.script.place.c_str());
 		}
 
-		if (cur.playerValid && (cur.money != prev.money || cur.honor != prev.honor || cur.fame != prev.fame || cur.bounty != prev.bounty))
+		if (cur.playerValid && cur.bounty != prev.bounty)
 		{
-			Log::Info("Stats: money=%d honor=%d fame=%d bounty=%d", cur.money, cur.honor, cur.fame, cur.bounty);
+			Log::Info("Bounty: $%d", cur.bounty);
 		}
 
 		if (cur.paused != prev.paused)
@@ -146,15 +144,6 @@ namespace
 			bool refreshScripts = (tick++ % (unsigned)std::max(1, 2000 / g_config.pollIntervalMs)) == 0;
 			GameSnapshot current = GameState::Sample(previous, refreshScripts);
 			LogInterestingChanges(previous, current);
-
-			// Bit 0 of GetAsyncKeyState = "pressed since the last call", so a short tap is not
-			// lost between two 500 ms polls (RedHook's IS_KEY_PRESSED is per-frame).
-			if (current.playerValid && (GetAsyncKeyState(VK_F9) & 1))
-			{
-				// Re-read the needle each time so research iterations do not need a plugin reload.
-				int needle = GetPrivateProfileIntA("Debug", "ResearchNeedle", g_config.researchNeedle, (g_directory + kIniName).c_str());
-				Research::Dump(g_directory, needle);
-			}
 
 			if (g_config.logLevel == "debug" && current.playerValid)
 			{
@@ -263,7 +252,6 @@ namespace
 void Plugin::Initialize(HMODULE module)
 {
 	std::string dir = ModuleDirectory(module);
-	g_directory = dir;
 	std::string iniPath = dir + kIniName;
 
 	if (!FileExists(iniPath))

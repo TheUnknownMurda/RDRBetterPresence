@@ -26,13 +26,10 @@ namespace
 		int outfit;
 		int gameState;
 		char playerName[64];
-		int money, honor, fame, bounty;
+		int bounty;
 	};
 
-	// Stat ids (Foxxyyy, RDR_Stats.c)
-	constexpr int kStatMoney = 0;
-	constexpr int kStatHonor = 1;
-	constexpr int kStatFame = 3;
+	// "Active bounty total" stat id (Foxxyyy, RDR_Stats.c); verified in-game.
 	constexpr int kStatBounty = 222;
 
 	void CopyStr(char* dst, size_t dstSize, const char* src)
@@ -147,9 +144,6 @@ namespace
 		}
 
 		// Stats are stored as floats (observed in-game: the int native returned 0x42960000 = 75.0 for a $75 bounty).
-		r.money = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatMoney) + 0.5f);
-		r.honor = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatHonor) + 0.5f);
-		r.fame = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatFame) + 0.5f);
 		r.bounty = (int)(STAT::GET_SAGPLAYER_STAT_FLOAT(kStatBounty) + 0.5f);
 	}
 
@@ -236,9 +230,6 @@ GameSnapshot GameState::Sample(const GameSnapshot& previous, bool refreshScripts
 	s.character = r.character;
 	s.outfit = r.outfit;
 	s.playerName = r.playerName;
-	s.money = r.money;
-	s.honor = r.honor;
-	s.fame = r.fame;
 	s.bounty = r.bounty;
 
 	// Script detection is ~200 native calls, so it is refreshed every few samples only.

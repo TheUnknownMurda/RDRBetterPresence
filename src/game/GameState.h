@@ -67,10 +67,7 @@ struct GameSnapshot
 	int gameState = 0;
 	std::string playerName;
 
-	// Player stats (SAG player stat ids documented by the community: 0 money, 1 honor, 3 fame, 222 bounty)
-	int money = 0;
-	int honor = 0;
-	int fame = 0;
+	// Active bounty (SAG player stat 222, stored as a float by the game)
 	int bounty = 0;
 
 	// Scripted activity (story mission, stranger, minigame...). Refreshed less often than the rest.

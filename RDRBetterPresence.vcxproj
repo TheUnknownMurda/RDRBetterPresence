@@ -101,7 +101,6 @@
     <ClInclude Include="src\discord\Json.h" />
     <ClInclude Include="src\game\GameState.h" />
     <ClInclude Include="src\game\Regions.h" />
-    <ClInclude Include="src\game\Research.h" />
     <ClInclude Include="src\game\Scripts.h" />
     <ClInclude Include="src\presence\Localization.h" />
     <ClInclude Include="src\presence\PresenceBuilder.h" />
@@ -117,7 +116,6 @@
     <ClCompile Include="src\discord\DiscordIPC.cpp" />
     <ClCompile Include="src\game\GameState.cpp" />
     <ClCompile Include="src\game\Regions.cpp" />
-    <ClCompile Include="src\game\Research.cpp" />
     <ClCompile Include="src\game\Scripts.cpp" />
     <ClCompile Include="src\presence\PresenceBuilder.cpp" />
   </ItemGroup>

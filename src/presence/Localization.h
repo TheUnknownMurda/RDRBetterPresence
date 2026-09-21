@@ -34,8 +34,6 @@ struct Strings
 	const char* strangerPrefix;  // "Stranger: "
 	const char* playingPrefix;   // "Playing "
 	const char* wanted;          // "Wanted"
-	const char* honorLabel;
-	const char* fameLabel;
 
 	// Fragments
 	const char* hp;             // "PV" / "HP"
@@ -90,8 +88,6 @@ namespace Localization
 		"Inconnu : ",
 		"Partie de ",
 		"Recherché",
-		"Honneur",
-		"Renommée",
 
 		"PV",
 		"Dead Eye",
@@ -204,8 +200,6 @@ namespace Localization
 		"Stranger: ",
 		"Playing ",
 		"Wanted",
-		"Honor",
-		"Fame",
 
 		"HP",
 		"Dead Eye",

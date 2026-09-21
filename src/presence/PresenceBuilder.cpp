@@ -299,12 +299,6 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 	{
 		a.largeText += kSeparator + std::string(t.outfits[s.outfit]);
 	}
-	if (cfg.showMoney)
-	{
-		a.largeText += kSeparator + FormatMoney(s.money)
-			+ kSeparator + t.honorLabel + " " + std::to_string(s.honor)
-			+ kSeparator + t.fameLabel + " " + std::to_string(s.fame);
-	}
 
 	std::string weapon = WeaponText(s, t);
 	bool momentIsPlain = (moment.text == t.exploring || moment.text == t.indoors);
