@@ -125,8 +125,8 @@ namespace
 		const char* icon;   // small image asset key, "" = use the weapon icon instead
 	};
 
-	// What the journal says the player is doing (mission, stranger, duel) or a running
-	// minigame. Empty text = nothing of the sort.
+	// What the journal says the player is doing (story mission, duel) or a running minigame.
+	// Empty text = nothing of the sort.
 	ActivityChoice ChooseScriptedActivity(const GameSnapshot& s, const Config& cfg, const Strings& t, const std::optional<RegionInfo>& region)
 	{
 		if (cfg.showMissions)
@@ -134,9 +134,8 @@ namespace
 			std::string title = Localization::TranslateActivity(cfg.language, s.mission.title);
 			switch (s.mission.kind)
 			{
-				case MissionKind::Story:    return { t.missionPrefix + title, "mission" };
-				case MissionKind::Stranger: return { t.strangerPrefix + title, "stranger" };
-				case MissionKind::Duel:     return { title, "duel" };
+				case MissionKind::Story: return { t.missionPrefix + title, "mission" };
+				case MissionKind::Duel:  return { title, "duel" };
 				default: break;
 			}
 		}

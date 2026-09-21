@@ -69,49 +69,12 @@ namespace
 	};
 	constexpr int kStoryCount = (int)(sizeof(kStoryTitles) / sizeof(kStoryTitles[0]));
 
-	// Stranger missions: candidate journal labels (the uppercase folder names found in the
-	// game's string table) and their titles. Several spellings are listed where the label
-	// was not found in the strings dump.
-	struct StrangerLabel
-	{
-		const char* label;
-		const char* title;
-	};
-	const StrangerLabel kStrangers[] =
-	{
-		{ "ABANDONED",      "Let No Man Put Asunder" },
-		{ "AZTECGOLD",      "Aztec Gold" },
-		{ "CALIFORNIA",     "California" },
-		{ "CANNIBAL",       "American Appetites" },
-		{ "CANNIBALFAMILY", "American Appetites" },
-		{ "CORPSE",         "Flowers for a Lady" },
-		{ "DEALER",         "Poppycock" },
-		{ "FUNNYMAN",       "Funny Man" },
-		{ "ICARUS",         "Deadalus and Son" },
-		{ "IKNOWYOU",       "I Know You" },
-		{ "JENNY",          "Jenny's Faith" },
-		{ "KILLERPIMP",     "Eva in Peril" },
-		{ "LIGHTS",         "Lights, Camera, Action" },
-		{ "LOVESAHORSE",    "Who Are You to Judge?" },
-		{ "HORSELOVER",     "Who Are You to Judge?" },
-		{ "OPIATE",         "Love is the Opiate" },
-		{ "POLITICIAN",     "American Lobbyist" },
-		{ "PROHIBITIONIST", "The Prohibitionist" },
-		{ "PROHIBITION",    "The Prohibitionist" },
-		{ "REMEMBER",       "Remember My Family" },
-		{ "WATER",          "Water and Honesty" },
-		{ "WRONGED",        "The Wronged Woman" },
-	};
-	constexpr int kStrangerCount = (int)(sizeof(kStrangers) / sizeof(kStrangers[0]));
-
-	constexpr int kJournalListCount = 2;   // list 0 = current, list 1 = available missions
-	constexpr int kMaxEntries = 64;
+	constexpr int kMaxEntries = 64;        // list 0 = in progress, list 1 = available missions
 	constexpr int kMissionEntryType = 1;
 
 	// Hash tables, filled by Init() through the game's STRING_TO_HASH.
 	unsigned g_storyShortHash[kStoryCount];
 	unsigned g_storyHash[kStoryCount];
-	unsigned g_strangerHash[kStrangerCount];
 	unsigned g_duelHash = 0;
 	bool g_ready = false;
 
@@ -119,11 +82,7 @@ namespace
 	struct Scan
 	{
 		int story;          // miss<N> or -1
-		int stranger;       // index into kStrangers or -1
 		bool duel;
-		int unknownCount;
-		unsigned unknown[8];
-		char listing[2048]; // every list-0 entry as "0xHASH:type/details[*]", for the research log
 	};
 
 	void InitRaw()
@@ -135,10 +94,6 @@ namespace
 			g_storyShortHash[n] = STRING::STRING_TO_HASH(label);
 			snprintf(label, sizeof(label), "miss%d", n);
 			g_storyHash[n] = STRING::STRING_TO_HASH(label);
-		}
-		for (int i = 0; i < kStrangerCount; ++i)
-		{
-			g_strangerHash[i] = STRING::STRING_TO_HASH(kStrangers[i].label);
 		}
 		g_duelHash = STRING::STRING_TO_HASH("beat_duel_short");
 	}
@@ -154,34 +109,22 @@ namespace
 		for (int i = 0; i < count; ++i)
 		{
 			int entry = JOURNAL::GET_JOURNAL_ENTRY_IN_LIST(0, i);
-			int type = JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry);
-
-			size_t len = strlen(out.listing);
-			if (len + 32 < sizeof(out.listing))
-			{
-				snprintf(out.listing + len, sizeof(out.listing) - len, "%s0x%08X:%d/%d%s", len ? " " : "",
-					(unsigned)entry, type, JOURNAL::GET_JOURNAL_ENTRY_NUM_DETAILS(entry),
-					JOURNAL::IS_JOURNAL_ENTRY_TARGETED(entry) ? "*" : "");
-			}
-
-			if (type != kMissionEntryType)
+			if (JOURNAL::GET_JOURNAL_ENTRY_TYPE(entry) != kMissionEntryType)
 			{
 				continue;
 			}
 			unsigned h = (unsigned)entry;
-			bool known = false;
-			for (int n = 0; n < kStoryCount && !known; ++n)
+			for (int n = 0; n < kStoryCount; ++n)
 			{
-				if (h == g_storyShortHash[n] || h == g_storyHash[n]) { out.story = n; known = true; }
+				if (h == g_storyShortHash[n] || h == g_storyHash[n])
+				{
+					out.story = n;
+					return;
+				}
 			}
-			for (int s = 0; s < kStrangerCount && !known; ++s)
+			if (h == g_duelHash)
 			{
-				if (h == g_strangerHash[s]) { out.stranger = s; known = true; }
-			}
-			if (!known && h == g_duelHash) { out.duel = true; known = true; }
-			if (!known && out.unknownCount < 8)
-			{
-				out.unknown[out.unknownCount++] = h;
+				out.duel = true;
 			}
 		}
 	}
@@ -218,47 +161,17 @@ ActiveMission Journal::Detect()
 
 	Scan scan{};
 	scan.story = -1;
-	scan.stranger = -1;
 	if (!ScanGuarded(scan))
 	{
-		static bool s_warned = false;
-		if (!s_warned)
-		{
-			Log::Error("Exception while reading the journal - mission names disabled");
-			s_warned = true;
-		}
+		Log::Error("Exception while reading the journal - mission names disabled");
 		g_ready = false;
 		return result;
-	}
-
-	// Research: the whole list, in the file only, whenever it changes.
-	static std::string s_lastListing;
-	if (s_lastListing != scan.listing)
-	{
-		s_lastListing = scan.listing;
-		Log::FileOnly("Journal list 0: %s", scan.listing);
-	}
-
-	// Unknown in-progress entries are worth a line in the log file (once per value).
-	static std::vector<unsigned> s_reported;
-	for (int i = 0; i < scan.unknownCount; ++i)
-	{
-		if (std::find(s_reported.begin(), s_reported.end(), scan.unknown[i]) == s_reported.end())
-		{
-			s_reported.push_back(scan.unknown[i]);
-			Log::FileOnly("Journal: unknown in-progress entry 0x%08X", scan.unknown[i]);
-		}
 	}
 
 	if (scan.story >= 0)
 	{
 		result.kind = MissionKind::Story;
 		result.title = kStoryTitles[scan.story];
-	}
-	else if (scan.stranger >= 0)
-	{
-		result.kind = MissionKind::Stranger;
-		result.title = kStrangers[scan.stranger].title;
 	}
 	else if (scan.duel)
 	{

@@ -31,7 +31,6 @@ struct Strings
 
 	// Scripted activities
 	const char* missionPrefix;   // "Mission: "
-	const char* strangerPrefix;  // "Stranger: "
 	const char* playingPrefix;   // "Playing "
 	const char* wanted;          // "Wanted"
 
@@ -85,7 +84,6 @@ namespace Localization
 		"Exploration libre",
 
 		"Mission : ",
-		"Inconnu : ",
 		"Partie de ",
 		"Recherché",
 
@@ -197,7 +195,6 @@ namespace Localization
 		"Free roaming",
 
 		"Mission: ",
-		"Stranger: ",
 		"Playing ",
 		"Wanted",
 

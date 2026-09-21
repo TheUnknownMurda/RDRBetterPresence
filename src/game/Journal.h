@@ -6,14 +6,12 @@
 // STRING_TO_HASH("miss<N>_short") is appended to journal list 0 (<N> = the mission's
 // UI id, e.g. miss11 = "You Shall Not Give False Testimony, Except for Profit"), and it
 // disappears when the mission ends. Available missions sit in list 1 as hash("miss<N>").
-// Stranger missions and duels are expected to use their own labels ("DEALER",
-// "beat_duel_short"...); unknown type-1 entries are logged so the table can grow.
+// Duels are expected to use the "beat_duel_short" label the same way (unverified).
 
 enum class MissionKind
 {
 	None,
 	Story,
-	Stranger,
 	Duel
 };
 

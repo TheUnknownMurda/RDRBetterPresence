@@ -17,7 +17,7 @@ struct Config
 	bool showWeapon = true;
 	bool showOutfit = true;
 	bool showBounty = true;           // "Wanted $x" on the activity line
-	bool showMissions = true;         // story / stranger missions, minigames and jobs by name
+	bool showMissions = true;         // story missions, duels and minigames on the activity line
 	bool showCoordinates = false;     // debugging aid: append X/Y to the state line
 	std::string largeImageDefault = "rdr_logo";
 	bool useRegionImages = true;      // large image = region_<slug> when a region is known
