@@ -309,6 +309,12 @@ Activity PresenceBuilder::Build(const GameSnapshot& s, const Config& cfg, long l
 		a.smallImage = WeaponCategorySlug(s.weaponCategory);
 		a.smallText = weapon.empty() ? t.unarmed : t.weaponPrefix + weapon;
 	}
+	else
+	{
+		// Nothing in hand and no special state: the boot stands for "on foot".
+		a.smallImage = "onfoot";
+		a.smallText = moment.text;
+	}
 
 	return a;
 }

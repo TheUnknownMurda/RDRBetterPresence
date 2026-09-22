@@ -86,6 +86,12 @@ GLYPHS = {
                   f'<circle cx="66" cy="68" r="10" stroke="{INK}" stroke-width="7" fill="none"/>'
                   f'<circle cx="34" cy="68" r="3" fill="{INK}"/><circle cx="66" cy="68" r="3" fill="{INK}"/>',
 
+    # Cowboy boot: shaft, foot with a pointed toe, heel and a spur.
+    "onfoot": f'<path d="M36 18 H60 V50 C60 54 64 56 70 58 L82 62 C86 64 86 70 82 72 H40 L36 66 Z" fill="{INK}"/>'
+              f'<rect x="40" y="66" width="12" height="10" fill="{INK}"/>'
+              f'<path d="M36 26 H60" stroke="{BG}" stroke-width="3"/>'
+              f'<polygon points="{star(30, 63, 7, 3, 6)}" fill="{INK}"/>',
+
     "horse": f'<path d="M24 60 L28 48 C32 40 40 34 50 30 L54 20 L58 30 L64 22 L66 32 C74 36 78 46 78 58 L78 78 '
              f'L56 78 C56 66 50 60 42 62 L38 70 C30 72 26 68 24 60 Z" fill="{INK}"/>'
              f'<circle cx="57" cy="42" r="3.2" fill="{BG}"/><circle cx="31" cy="55" r="2.5" fill="{BG}"/>',

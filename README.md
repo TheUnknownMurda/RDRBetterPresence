@@ -76,7 +76,7 @@ Les images sont hébergées par Discord dans **votre** application : *Developer 
 Art Assets → Add Image(s)*. Le nom de l'asset doit être exactement la clé (= le nom du fichier sans `.png`).
 Sans images, Discord affiche un « ? » à la place.
 
-**Petites images (état / arme) — fournies** : les 24 icônes de [`assets/small/`](assets/small) (512 × 512, disque
+**Petites images (état / arme) — fournies** : les 25 icônes de [`assets/small/`](assets/small) (512 × 512, disque
 sombre + anneau rouge, lisibles à 30 px) sont aussi téléchargeables en zip dans les [Releases](../../releases/latest).
 Uploadez-les telles quelles.
 

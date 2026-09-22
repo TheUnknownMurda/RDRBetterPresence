@@ -115,6 +115,11 @@ int main(int argc, char** argv)
 	Activity aPoker = PresenceBuilder::Build(poker, cfg, 0);
 	printf("[builder] poker     : details='%s' small='%s'/'%s'\n", aPoker.details.c_str(), aPoker.smallImage.c_str(), aPoker.smallText.c_str());
 
+	GameSnapshot unarmed = BaseSnapshot();
+	unarmed.weapon = WEAPON_INVALID; unarmed.weaponCategory = WEAPON_CATEGORY_INVALID; unarmed.weaponName.clear();
+	Activity aUnarmed = PresenceBuilder::Build(unarmed, cfg, 0);
+	printf("[builder] unarmed   : details='%s' small='%s'/'%s'\n", aUnarmed.details.c_str(), aUnarmed.smallImage.c_str(), aUnarmed.smallText.c_str());
+
 	GameSnapshot paused = mission;
 	paused.paused = true;
 	Activity aPaused = PresenceBuilder::Build(paused, cfg, 0);
