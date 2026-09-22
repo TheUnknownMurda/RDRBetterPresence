@@ -81,7 +81,7 @@ namespace Localization
 		"Dans l'eau",
 		"Ivre",
 		"À l'intérieur",
-		"Exploration libre",
+		"À pied",
 
 		"Mission : ",
 		"Partie de ",
@@ -192,7 +192,7 @@ namespace Localization
 		"In the water",
 		"Drunk",
 		"Indoors",
-		"Free roaming",
+		"On foot",
 
 		"Mission: ",
 		"Playing ",

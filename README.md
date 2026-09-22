@@ -7,7 +7,7 @@ Ce que Discord affiche, mis à jour en temps réel depuis le jeu :
 
 | Ligne | Contenu | Source (natives RedHook) |
 |---|---|---|
-| Activité | **Mission en cours (titre)**, duel, mini-jeu (+ lieu) ; sinon Exploration libre, En fusillade, Dead Eye, À cheval / mule / taureau / bison, Train, Diligence, Lasso, Cinématique, **En pause**, Mort, Ivre, À l'intérieur… + PV % + prime « Wanted $x » | Journal du jeu (`GET_JOURNAL_ENTRY_IN_LIST`, voir plus bas), `IS_PLAYER_IN_COMBAT`, `IS_PLAYER_DEADEYE`, `IS_ACTOR_RIDING`, `IS_ACTOR_ON_TRAIN`, `IS_MINIGAME_RUNNING`, `GET_ACTOR_HEALTH`, stat 222 (prime)… |
+| Activité | **Mission en cours (titre)**, duel, mini-jeu (+ lieu) ; sinon À pied, En fusillade, Dead Eye, À cheval / mule / taureau / bison, Train, Diligence, Lasso, Cinématique, **En pause**, Mort, Ivre, À l'intérieur… + PV % + prime « Wanted $x » | Journal du jeu (`GET_JOURNAL_ENTRY_IN_LIST`, voir plus bas), `IS_PLAYER_IN_COMBAT`, `IS_PLAYER_DEADEYE`, `IS_ACTOR_RIDING`, `IS_ACTOR_ON_TRAIN`, `IS_MINIGAME_RUNNING`, `GET_ACTOR_HEALTH`, stat 222 (prime)… |
 | Lieu | Région · lieu le plus proche · heure du jeu · météo | Table de 29 repères (x, z) → région, `GET_TIME_OF_DAY`, `GET_WEATHER` |
 | Grande image | Carte de la région (`region_<slug>`), survol : personnage (John / Jack) + tenue | `GET_ACTOR_ENUM`, `GET_CURRENT_ACTOR_ENUM_VARIATION` |
 | Petite image | Icône d'activité ou catégorie d'arme, survol : nom de l'arme | `GET_WEAPON_IN_HAND`, `GET_WEAPON_DISPLAY_NAME` |
